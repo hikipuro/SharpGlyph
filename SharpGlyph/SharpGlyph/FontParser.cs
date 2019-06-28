@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 
 namespace SharpGlyph {
 	public class FontParser {
@@ -27,16 +25,15 @@ namespace SharpGlyph {
 		}
 
 		protected static Font[] ParseTTC(BinaryReaderFont reader) {
-			List<Font> fonts = new List<Font>();
 			TTCHeader ttcHeader = TTCHeader.Read(reader);
+			Font[] fonts = new Font[ttcHeader.numFonts];
 			//Console.WriteLine(ttcHeader);
 			for (int i = 0; i < ttcHeader.numFonts; i++) {
 				uint fontOffset = ttcHeader.offsetTable[i];
 				reader.Position = fontOffset;
-				Font font = Font.Read(reader);
-				fonts.Add(font);
+				fonts[i] = Font.Read(reader);
 			}
-			return fonts.ToArray();
+			return fonts;
 		}
 	}
 }

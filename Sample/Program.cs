@@ -40,10 +40,6 @@ namespace Sample {
 
 			SharpGlyph.Font font = fonts[0];
 			Bitmap bitmap = new Bitmap(256, 256);
-			//Graphics g = Graphics.FromImage(bitmap);
-			//g.Clear(Color.White);
-			//g.SmoothingMode = SmoothingMode.HighQuality;
-
 
 			Stopwatch stopwatch = Stopwatch.StartNew();
 			font.FontSize = 24;

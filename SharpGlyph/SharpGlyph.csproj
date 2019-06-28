@@ -36,7 +36,6 @@
     <Compile Include="SharpGlyph\Font.cs" />
     <Compile Include="SharpGlyph\FontParser.cs" />
     <Compile Include="SharpGlyph\OffsetTable.cs" />
-    <Compile Include="SharpGlyph\OpenTypeData.cs" />
     <Compile Include="SharpGlyph\Table.cs" />
     <Compile Include="SharpGlyph\TableRecord.cs" />
     <Compile Include="SharpGlyph\Tables.cs" />
