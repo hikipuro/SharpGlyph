@@ -5,6 +5,9 @@ using System.Drawing.Drawing2D;
 namespace SharpGlyph {
 	public class TrueTypeRenderer {
 		public static void DrawGlyph(RendererContext context) {
+			if (context.Glyph == null) {
+				return;
+			}
 			SimpleGlyph simpleGlyph = context.Glyph.simpleGlyph;
 			if (simpleGlyph == null) {
 				return;

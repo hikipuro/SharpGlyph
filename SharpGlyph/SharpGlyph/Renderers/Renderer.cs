@@ -34,7 +34,6 @@ namespace SharpGlyph {
 			context.FontSize = FontSize;
 			context.Bitmap = bitmap;
 			context.Graphics = Graphics.FromImage(bitmap);
-			context.Graphics.Clear(Color.White);
 			context.Graphics.SmoothingMode = SmoothingMode.HighQuality;
 
 			HmtxTable hmtx = font.Tables.hmtx;
@@ -53,12 +52,20 @@ namespace SharpGlyph {
 				} else {
 					codePoint = charCode;
 				}
+				context.CodePoint = codePoint;
 				context.GlyphId = font.GetGlyphId(codePoint);
 				if (hmtx != null) {
 					context.hMetric = hmtx.GetMetric(context.GlyphId);
 				}
 				if (glyf != null) {
 					context.Glyph = glyf.GetGlyph(context.GlyphId);
+					if (context.Glyph == null) {
+						//context.GlyphId = 0;
+						//context.Glyph = glyf.GetGlyph(0);
+						if (hmtx != null) {
+							//context.hMetric = hmtx.GetMetric(0);
+						}
+					}
 				}
 				DrawGlyph(context);
 			}
@@ -74,7 +81,9 @@ namespace SharpGlyph {
 			if (data == null) {
 				return;
 			}
-			//Console.WriteLine("Prep Decode {0}", Interpreter.Decode(prep.data));
+			#if DEBUG
+			Console.WriteLine("Prep Decode: {0}\n{1}", data.Length, Interpreter.Decode(data));
+			#endif
 			interpreter.Exec(data, null);
 		}
 
@@ -101,23 +110,20 @@ namespace SharpGlyph {
 			}
 
 			if (context.Glyph == null) {
-				//DrawSbix(font, glyphId, size, g, x);
-				//Console.WriteLine("##### empty glyph: {0} ", context.GlyphId);
-				if (context.hMetric != null) {
-					if (context.hMetric.advanceWidth == 0) {
-						context.X += font.Tables.hhea.xMaxExtent;
-						return;
-					}
-					context.X += context.hMetric.advanceWidth;
-					return;
-				}
-				context.X += font.Tables.hhea.xMaxExtent;
+				context.NextGlyph();
 				return;
 			}
 
-			//Console.WriteLine(glyph);
-			//Console.WriteLine("Decode:\n{0}", Interpreter.Decode(glyph.simpleGlyph.instructions));
 			if (context.UseInterpreter) {
+				#if DEBUG
+				if (context.Glyph.simpleGlyph != null) {
+					Console.WriteLine(
+						"Decode: \"{0}\"\n{1}",
+						char.ConvertFromUtf32(context.CodePoint),
+						Interpreter.Decode(context.Glyph.simpleGlyph.instructions)
+					);
+				}
+				#endif
 				context.Glyph = InterpretGlyph(context.Glyph);
 			}
 

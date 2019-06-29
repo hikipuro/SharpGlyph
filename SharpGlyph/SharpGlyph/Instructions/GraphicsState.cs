@@ -61,28 +61,28 @@ namespace SharpGlyph {
 			single_width_value = 0;
 		}
 
-		public void SetProjectionVector(PointF a, PointF b) {
-			projection_vector = (float)Math.Atan2(b.Y - a.Y, b.X - a.X);
+		public void SetProjectionVector(Point2D a, Point2D b) {
+			projection_vector = a.GetAngle(b);
 		}
 
-		public void SetProjectionVectorY(PointF a, PointF b) {
-			projection_vector = (float)(Math.Atan2(b.Y - a.Y, b.X - a.X) + Math.PI / 2);
+		public void SetProjectionVectorY(Point2D a, Point2D b) {
+			projection_vector = a.GetAngle(b) + Point2D.PI / 2;
 		}
 
-		public void SetFreedomVector(PointF a, PointF b) {
-			freedom_vector = (float)Math.Atan2(b.Y - a.Y, b.X - a.X);
+		public void SetFreedomVector(Point2D a, Point2D b) {
+			freedom_vector = a.GetAngle(b);
 		}
 
-		public void SetFreedomVectorY(PointF a, PointF b) {
-			freedom_vector = (float)(Math.Atan2(b.Y - a.Y, b.X - a.X) + Math.PI / 2);
+		public void SetFreedomVectorY(Point2D a, Point2D b) {
+			freedom_vector = a.GetAngle(b) + Point2D.PI / 2;
 		}
 
-		public void SetDualProjectionVectors(PointF a, PointF b) {
-			dual_projection_vectors = (float)Math.Atan2(b.Y - a.Y, b.X - a.X);
+		public void SetDualProjectionVectors(Point2D a, Point2D b) {
+			dual_projection_vectors = a.GetAngle(b);
 		}
 
-		public void SetDualProjectionVectorsY(PointF a, PointF b) {
-			dual_projection_vectors = (float)(Math.Atan2(b.Y - a.Y, b.X - a.X) + Math.PI / 2);
+		public void SetDualProjectionVectorsY(Point2D a, Point2D b) {
+			dual_projection_vectors = a.GetAngle(b) + Point2D.PI / 2;
 		}
 	}
 }

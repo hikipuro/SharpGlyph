@@ -267,8 +267,6 @@ namespace SharpGlyph {
 				if (b.tableTag == HheaTable.Tag) { return 1; }
 				if (a.tableTag == LocaTable.Tag) { return -1; }
 				if (b.tableTag == LocaTable.Tag) { return 1; }
-				if (a.tableTag == CBLCTable.Tag) { return -1; }
-				if (b.tableTag == CBLCTable.Tag) { return 1; }
 				if (a.tableTag == EBLCTable.Tag) { return -1; }
 				if (b.tableTag == EBLCTable.Tag) { return 1; }
 				if (a.tableTag == CBLCTable.Tag) { return -1; }
@@ -291,9 +289,9 @@ namespace SharpGlyph {
 				//Console.WriteLine("checkSum {0}: {1}", record.tableTag, checkSum);
 				reader.Position = record.offset;
 				long memory = 0;
-				if (Font.IsDebug) {
+				#if DEBUG
 					memory = GC.GetTotalMemory(false);
-				}
+				#endif
 
 				switch (record.tableTag) {
 					case AvarTable.Tag: // OpenType Font Variations
@@ -447,10 +445,12 @@ namespace SharpGlyph {
 						//VVAR = VVARTable.Read(reader);
 						break;
 				}
+				#if DEBUG
 				if (Font.IsDebug) {
 					memory = GC.GetTotalMemory(false) - memory;
 					Console.WriteLine("{0} memory: {1}", record.tableTag, memory);
 				}
+				#endif
 			}
 		}
 	}

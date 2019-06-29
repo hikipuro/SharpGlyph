@@ -31,10 +31,14 @@ namespace SharpGlyph {
 			set { renderer.UseBitmapGlyph = value; }
 		}
 
+		public bool UseInterpreter {
+			get { return renderer.UseInterpreter; }
+			set { renderer.UseInterpreter = value; }
+		}
+
 		public Font() {
 			Tables = new Tables();
 			//charToGlyphTable = new CharToGlyphTable();
-			interpreter = new Interpreter();
 		}
 
 		public static Font[] Load(string filePath) {
@@ -45,10 +49,12 @@ namespace SharpGlyph {
 			Font font = new Font();
 			//Console.WriteLine(offsetTable);
 			font.Tables.ReadTableRecords(reader);
+			#if DEBUG
 			if (IsDebug) {
 				Console.WriteLine();
 				font.DebugLogRecords();
 			}
+			#endif
 			font.Tables.ReadTables(reader);
 			//font.Tables.Records = null;
 
@@ -58,13 +64,13 @@ namespace SharpGlyph {
 			//memory = GC.GetTotalMemory(false) - memory;
 			//Console.WriteLine("cmap memory: {0}", memory);
 
-			font.interpreter.Init(font);
+			font.interpreter = new Interpreter(font);
 			font.InterpretFpgm();
 
 			font.renderer = new Renderer(font, font.interpreter);
 			//font.Tables.name = null;
-
-			if (IsDebug) {
+			
+			#if DEBUG
 				//Console.WriteLine("GetFuncCount: " + font.interpreter.funcs.GetFuncCount());
 
 				//foreach (Strike strike in fontData.sbix.strikes) {
@@ -120,7 +126,7 @@ namespace SharpGlyph {
 				//Console.WriteLine(font.Tables.vmtx);
 				//Console.WriteLine(font.Tables.VORG);
 				//Console.WriteLine(font.Tables.VVAR);
-			}
+			#endif
 
 			return font;
 		}
@@ -202,7 +208,9 @@ namespace SharpGlyph {
 			if (data == null) {
 				return;
 			}
-			//Console.WriteLine("Fpgm Decode {0}", Interpreter.Decode(fpgm.data));
+			#if DEBUG
+			//Console.WriteLine("Fpgm Decode:\n{0}", Interpreter.Decode(data));
+			#endif
 			interpreter.Exec(data, null);
 		}
 	}

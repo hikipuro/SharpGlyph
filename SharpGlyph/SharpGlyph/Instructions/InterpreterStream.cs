@@ -32,6 +32,13 @@ namespace SharpGlyph {
 			pc = 0;
 		}
 
+		public void Clear() {
+			streams.Clear();
+			pcs.Clear();
+			stream = null;
+			pc = 0;
+		}
+
 		public void Push(byte[] bytes) {
 			streams.Push(stream);
 			pcs.Push(pc);
@@ -54,6 +61,9 @@ namespace SharpGlyph {
 		}
 
 		public bool HasNext() {
+			if (stream == null) {
+				return false;
+			}
 			return pc + 1 < stream.Length;
 		}
 
@@ -67,7 +77,11 @@ namespace SharpGlyph {
 		public int NextWord() {
 			byte high = Next();
 			byte low = Next();
-			return (high << 8) | low;
+			int word = (high << 8) | low;
+			if ((word & 0x8000) > 0) {
+				word = (int)(word | 0xFFFF0000u);
+			}
+			return word;
 		}
 
 		public void JMPR(int offset) {

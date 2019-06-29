@@ -44,7 +44,8 @@ namespace SharpGlyph {
 
 		public Glyph GetGlyph(int glyphId) {
 			if (glyphId < 0 || glyphId >= loca.numGlyphs) {
-				return null;
+				glyphId = 0;
+				//return null;
 			}
 			if (File.Exists(filePath) == false) {
 				return null;

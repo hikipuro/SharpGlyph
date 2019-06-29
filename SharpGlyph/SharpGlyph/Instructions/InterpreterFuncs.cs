@@ -29,14 +29,16 @@ namespace SharpGlyph {
 
 		public byte[] CALL(int index) {
 			if (funcs.ContainsKey(index)) {
-				//Console.WriteLine("##### Call: " + index);
-				//Console.WriteLine("Decode:\n{0}", Interpreter.Decode(funcs[index]));
+				#if DEBUG
+				Console.WriteLine("##### Call: " + index);
+				Console.WriteLine("\tDecode func:\n\t{0}", Interpreter.Decode(funcs[index]).Replace("\n", "\n\t"));
+				#endif
 				return funcs[index];
 			}
-			throw new InvalidOperationException(
-				"Call invalid function: " + index
-			);
-			//return null;
+			//throw new InvalidOperationException(
+			//	"Call invalid function: " + index
+			//);
+			return null;
 		}
 
 		public void IDEF(int index, byte[] data) {

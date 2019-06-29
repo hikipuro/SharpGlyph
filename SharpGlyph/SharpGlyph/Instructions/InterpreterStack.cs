@@ -4,8 +4,23 @@ namespace SharpGlyph {
 		protected int[] data;
 		protected int index;
 
-		public InterpreterStack(int maxDepth) {
-			data = new int[maxDepth];
+		public int Count {
+			get { return data.Length; }
+		}
+
+		public int Depth {
+			get { return index; }
+		}
+
+		public InterpreterStack() {
+			data = new int[0];
+			index = 0;
+		}
+
+		public void Init(int maxDepth) {
+			if (data == null || data.Length != maxDepth) {
+				data = new int[maxDepth];
+			}
 			index = 0;
 		}
 
@@ -15,17 +30,16 @@ namespace SharpGlyph {
 		}
 
 		public void Push(ushort value) {
-			data[index] = value;
+			int n = value;
+			if ((n & 0x8000) > 0) {
+				n = (int)(n | 0xFFFF0000);
+			}
+			data[index] = n;
 			index++;
 		}
 
 		public void Push(int value) {
 			data[index] = value;
-			index++;
-		}
-
-		public void Push(long value) {
-			data[index] = (int)value;
 			index++;
 		}
 
@@ -58,19 +72,21 @@ namespace SharpGlyph {
 		}
 
 		public int Pop() {
+			int value = data[index - 1];
 			index--;
-			return data[index];
+			return value;
 		}
 
 		public float PopF2Dot14() {
+			float value = data[index - 1] & 0xFFFF;
 			index--;
-			float n = data[index] & 0xFFFF;
-			return n / 0x4000f;
+			return value / 0x4000;
 		}
 
 		public float PopF26Dot6() {
+			float value = data[index - 1];
 			index--;
-			return (float)data[index] / 64;
+			return value / 0x40;
 		}
 
 		public float PopVector() {
@@ -99,7 +115,7 @@ namespace SharpGlyph {
 			data[index - 2] = top;
 		}
 
-		public void Depth() {
+		public void PushDepth() {
 			data[index] = index;
 			index++;
 		}
@@ -127,8 +143,8 @@ namespace SharpGlyph {
 
 		public void LT() {
 			index--;
-			uint e2 = (uint)data[index];
-			uint e1 = (uint)data[index - 1];
+			int e2 = data[index];
+			int e1 = data[index - 1];
 			if (e1 < e2) {
 				data[index - 1] = 1;
 			} else {
@@ -138,8 +154,8 @@ namespace SharpGlyph {
 
 		public void LTEQ() {
 			index--;
-			uint e2 = (uint)data[index];
-			uint e1 = (uint)data[index - 1];
+			int e2 = data[index];
+			int e1 = data[index - 1];
 			if (e1 <= e2) {
 				data[index - 1] = 1;
 			} else {
@@ -149,8 +165,8 @@ namespace SharpGlyph {
 
 		public void GT() {
 			index--;
-			uint e2 = (uint)data[index];
-			uint e1 = (uint)data[index - 1];
+			int e2 = (int)data[index];
+			int e1 = (int)data[index - 1];
 			if (e1 > e2) {
 				data[index - 1] = 1;
 			} else {
@@ -160,8 +176,8 @@ namespace SharpGlyph {
 
 		public void GTEQ() {
 			index--;
-			uint e2 = (uint)data[index];
-			uint e1 = (uint)data[index - 1];
+			int e2 = (int)data[index];
+			int e1 = (int)data[index - 1];
 			if (e1 >= e2) {
 				data[index - 1] = 1;
 			} else {
@@ -253,7 +269,8 @@ namespace SharpGlyph {
 
 		public void Div() {
 			index--;
-			long n2 = data[index - 1] << 6;
+			long n2 = data[index - 1];
+			n2 <<= 6;
 			data[index - 1] = (int)(n2 / data[index]);
 		}
 

@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpGlyph", "SharpGlyph\Sh
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample", "Sample\Sample.csproj", "{995410C1-11C9-414F-BFB5-76FA73ACE0CF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "UnitTest\UnitTest.csproj", "{C8FD43B4-6684-40CF-BC98-A03C7FD5B107}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -19,5 +21,9 @@ Global
 		{995410C1-11C9-414F-BFB5-76FA73ACE0CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{995410C1-11C9-414F-BFB5-76FA73ACE0CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{995410C1-11C9-414F-BFB5-76FA73ACE0CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8FD43B4-6684-40CF-BC98-A03C7FD5B107}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8FD43B4-6684-40CF-BC98-A03C7FD5B107}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8FD43B4-6684-40CF-BC98-A03C7FD5B107}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8FD43B4-6684-40CF-BC98-A03C7FD5B107}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

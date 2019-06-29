@@ -7,6 +7,7 @@ namespace SharpGlyph {
 		public bool UseBitmapGlyph;
 		public Font Font;
 		public LongHorMetric hMetric;
+		public int CodePoint;
 		public int GlyphId;
 		public Glyph Glyph;
 		public int X;
