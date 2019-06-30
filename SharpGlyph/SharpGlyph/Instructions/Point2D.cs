@@ -3,6 +3,7 @@
 namespace SharpGlyph {
 	public class Point2D {
 		public static readonly float PI = (float)Math.PI;
+		public static readonly float HalfPI = (float)(Math.PI / 2);
 		public static readonly Point2D Empty = new Point2D(0, 0);
 
 		public float x;

@@ -84,7 +84,7 @@ namespace SharpGlyph {
 			#if DEBUG
 			Console.WriteLine("Prep Decode: {0}\n{1}", data.Length, Interpreter.Decode(data));
 			#endif
-			interpreter.Exec(data, null);
+			interpreter.Interpret(data, null);
 		}
 
 		protected Glyph InterpretGlyph(Glyph glyph) {
@@ -92,7 +92,7 @@ namespace SharpGlyph {
 				return null;
 			}
 			if (glyph.simpleGlyph != null) {
-				return interpreter.Exec(glyph.simpleGlyph.instructions, glyph);
+				return interpreter.Interpret(glyph.simpleGlyph.instructions, glyph);
 			}
 			return null;
 		}

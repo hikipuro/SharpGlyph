@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Drawing;
 
 namespace SharpGlyph {
 	public class GraphicsState {
@@ -66,7 +65,7 @@ namespace SharpGlyph {
 		}
 
 		public void SetProjectionVectorY(Point2D a, Point2D b) {
-			projection_vector = a.GetAngle(b) + Point2D.PI / 2;
+			projection_vector = a.GetAngle(b) + Point2D.HalfPI;
 		}
 
 		public void SetFreedomVector(Point2D a, Point2D b) {
@@ -74,7 +73,7 @@ namespace SharpGlyph {
 		}
 
 		public void SetFreedomVectorY(Point2D a, Point2D b) {
-			freedom_vector = a.GetAngle(b) + Point2D.PI / 2;
+			freedom_vector = a.GetAngle(b) + Point2D.HalfPI;
 		}
 
 		public void SetDualProjectionVectors(Point2D a, Point2D b) {
@@ -82,7 +81,7 @@ namespace SharpGlyph {
 		}
 
 		public void SetDualProjectionVectorsY(Point2D a, Point2D b) {
-			dual_projection_vectors = a.GetAngle(b) + Point2D.PI / 2;
+			dual_projection_vectors = a.GetAngle(b) + Point2D.HalfPI;
 		}
 	}
 }

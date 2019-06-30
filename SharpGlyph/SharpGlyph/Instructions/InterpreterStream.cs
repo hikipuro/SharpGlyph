@@ -3,10 +3,10 @@ using System.Collections.Generic;
 
 namespace SharpGlyph {
 	public class InterpreterStream {
-		Stack<byte[]> streams;
-		Stack<int> pcs;
-		byte[] stream;
-		int pc;
+		protected Stack<byte[]> streamStack;
+		protected Stack<int> pcStack;
+		protected byte[] stream;
+		protected int pc;
 
 		public int Length {
 			get {
@@ -22,49 +22,49 @@ namespace SharpGlyph {
 		}
 
 		public int Depth {
-			get { return streams.Count; }
+			get { return streamStack.Count; }
 		}
 
 		public InterpreterStream() {
-			streams = new Stack<byte[]>();
-			pcs = new Stack<int>();
+			streamStack = new Stack<byte[]>();
+			pcStack = new Stack<int>();
 			stream = null;
 			pc = 0;
 		}
 
 		public void Clear() {
-			streams.Clear();
-			pcs.Clear();
+			streamStack.Clear();
+			pcStack.Clear();
 			stream = null;
 			pc = 0;
 		}
 
 		public void Push(byte[] bytes) {
-			streams.Push(stream);
-			pcs.Push(pc);
+			streamStack.Push(stream);
+			pcStack.Push(pc);
 			stream = bytes;
 			pc = 0;
 		}
 
 		public void Push(byte[] bytes, int count) {
 			for (int i = 0; i < count; i++) {
-				streams.Push(stream);
-				pcs.Push(pc);
+				streamStack.Push(stream);
+				pcStack.Push(pc);
 				stream = bytes;
 				pc = 0;
 			}
 		}
 
 		public void Pop() {
-			stream = streams.Pop();
-			pc = pcs.Pop();
+			stream = streamStack.Pop();
+			pc = pcStack.Pop();
 		}
 
 		public bool HasNext() {
 			if (stream == null) {
 				return false;
 			}
-			return pc + 1 < stream.Length;
+			return pc < stream.Length;
 		}
 
 		public byte Next() {
@@ -82,6 +82,7 @@ namespace SharpGlyph {
 				word = (int)(word | 0xFFFF0000u);
 			}
 			return word;
+			//return (high << 8) | low;
 		}
 
 		public void JMPR(int offset) {

@@ -211,7 +211,7 @@ namespace SharpGlyph {
 			#if DEBUG
 			//Console.WriteLine("Fpgm Decode:\n{0}", Interpreter.Decode(data));
 			#endif
-			interpreter.Exec(data, null);
+			interpreter.Interpret(data, null);
 		}
 	}
 }

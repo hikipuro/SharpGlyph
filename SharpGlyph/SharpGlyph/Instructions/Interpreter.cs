@@ -1,19 +1,19 @@
 ﻿using System;
-using System.Drawing;
 
 namespace SharpGlyph {
 	public class Interpreter {
 		public event Action<int> Debug;
 
+		public bool IsDebug = false;
 		public int ppem = 24;
+		public InterpreterStack stack;
+		public int[] storage;
+		public CvtTable cvt;
+		public GraphicsState state;
 		protected InterpreterFuncs funcs;
-		protected InterpreterStack stack;
 		protected InterpreterStream stream;
-		protected GraphicsState state;
-		protected int[] storage;
 		protected GetInfoResult getInfoResult;
 		//protected MaxpTable maxp;
-		protected CvtTable cvt;
 		protected ushort maxStackElements;
 		protected ushort maxTwilightPoints;
 		protected ushort maxFunctionDefs;
@@ -28,25 +28,34 @@ namespace SharpGlyph {
 			stream = new InterpreterStream();
 			state = new GraphicsState();
 			getInfoResult = new GetInfoResult();
-			MaxpTable maxp = font.Tables.maxp;
-			cvt = font.Tables.cvt;
-			storage = new int[maxp.maxStorage];
-			maxStackElements = maxp.maxStackElements;
-			maxTwilightPoints = maxp.maxTwilightPoints;
-			maxFunctionDefs = maxp.maxFunctionDefs;
+			if (font != null) {
+				MaxpTable maxp = font.Tables.maxp;
+				cvt = font.Tables.cvt;
+				storage = new int[maxp.maxStorage];
+				maxStackElements = maxp.maxStackElements;
+				maxTwilightPoints = maxp.maxTwilightPoints;
+				maxFunctionDefs = maxp.maxFunctionDefs;
+			} else {
+				cvt = new CvtTable();
+				cvt.data = new int[64];
+				storage = new int[64];
+				maxStackElements = 1024;
+			}
 			#if DEBUG
 			Console.WriteLine("maxStackElements: " + maxStackElements);
 			Console.WriteLine("maxFunctionDefs: " + maxFunctionDefs);
 			#endif
 		}
 
-		public Glyph Exec(byte[] data, Glyph glyph) {
+		public Glyph Interpret(byte[] data, Glyph glyph = null) {
 			if (data == null || data.Length <= 0) {
 				return glyph;
 			}
 			stream.Push(data);
-			stack.Init(maxStackElements);
-			Array.Clear(storage, 0, storage.Length);
+			if (IsDebug == false) {
+				stack.Init(maxStackElements);
+				Array.Clear(storage, 0, storage.Length);
+			}
 			Point2D[] origin = null;
 			Point2D[][] points = new Point2D[2][];
 
@@ -101,7 +110,7 @@ namespace SharpGlyph {
 					if (stream.Depth <= 0) {
 						break;
 					}
-					continue;
+					//continue;
 				}
 
 				ushort opcode = stream.Next();
@@ -144,20 +153,15 @@ namespace SharpGlyph {
 					//
 					case 0x43: // RS[ ] (Read Store)
 						{
-							int i = stack.Pop();
-							stack.Push(
-								storage[i]
-							);
+							int n = stack.Pop();
+							stack.Push(storage[n]);
 						}
 						break;
 					case 0x42: // WS[ ] (Write Store)
 						{
-							int d = stack.Pop();
-							int i = stack.Pop();
-							//if (i >= storage.Length) {
-							//	break;
-							//}
-							storage[i] = d;
+							int v = stack.Pop();
+							int l = stack.Pop();
+							storage[l] = v;
 						}
 						break;
 
@@ -166,24 +170,22 @@ namespace SharpGlyph {
 					//
 					case 0x44: // WCVTP[ ] (Write Control Value Table in Pixel units)
 						{
-							int d = stack.Pop();
-							int i = stack.Pop();
-							cvt.data[i] = d / ppem;
+							int v = stack.Pop();
+							int l = stack.Pop();
+							cvt.data[l] = v * 0x40;
 						}
 						break;
 					case 0x70: // WCVTF[ ] (Write Control Value Table in FUnits)
 						{
-							int d = stack.Pop();
-							int i = stack.Pop();
-							cvt.data[i] = d * ppem;
+							int v = stack.Pop();
+							int l = stack.Pop();
+							cvt.data[l] = v;
 						}
 						break;
 					case 0x45: // RCVT[ ] (Read Control Value Table)
 						{
-							int n = stack.Pop();
-							stack.Push(
-								cvt.data[n]
-							);
+							int location = stack.Pop();
+							stack.Push(cvt.data[location]);
 						}
 						break;
 
@@ -211,21 +213,19 @@ namespace SharpGlyph {
 						state.freedom_vector = 0;
 						break;
 					case 0x06: // SPVTL[a] (Set Projection_Vector To Line)
-						state.SetProjectionVector(
-							points[state.zp2][stack.Pop()],
-							points[state.zp1][stack.Pop()]
-						);
+						{
+							int p1 = stack.Pop();
+							int p2 = stack.Pop();
+							state.SetProjectionVector(
+								points[state.zp2][p1],
+								points[state.zp1][p2]
+							);
+						}
 						break;
 					case 0x07: // SPVTL[a]
 						{
 							int p1 = stack.Pop();
 							int p2 = stack.Pop();
-							if (p1 >= points[state.zp2].Length) {
-								break;
-							}
-							if (p2 >= points[state.zp1].Length) {
-								break;
-							}
 							state.SetProjectionVectorY(
 								points[state.zp2][p1],
 								points[state.zp1][p2]
@@ -833,7 +833,7 @@ namespace SharpGlyph {
 						stack.Pop();
 						break;
 					case 0x22: // CLEAR[ ] (Clear the entire stack)
-						stack.Clear();
+						stack.Reset();
 						break;
 					case 0x23: // SWAP[ ] (SWAP the top two elements on the stack)
 						stack.Swap();
@@ -847,7 +847,7 @@ namespace SharpGlyph {
 					case 0x26: // MINDEX[ ] (Move the INDEXed element to the top of the stack)
 						stack.MoveToTop(stack.Pop());
 						break;
-					case 0x8A: // ROLL (ROLL the top three stack elements)
+					case 0x8A: // ROLL[ ] (ROLL the top three stack elements)
 						stack.Roll();
 						break;
 
@@ -894,10 +894,10 @@ namespace SharpGlyph {
 						stack.GTEQ();
 						break;
 					case 0x54: // EQ[ ] (EQual)
-						stack.Equal();
+						stack.EQ();
 						break;
 					case 0x55: // NEQ[ ] (Not EQual)
-						stack.NotEqual();
+						stack.NEQ();
 						break;
 					case 0x56: // ODD[ ] (ODD)
 						stack.Odd(state.round_state);
@@ -1065,8 +1065,10 @@ namespace SharpGlyph {
 				}
 			}
 
-			stream.Clear();
-			state.Reset();
+			if (IsDebug == false) {
+				stream.Clear();
+				state.Reset();
+			}
 
 			if (glyph != null) {
 				SimpleGlyph simpleGlyph = glyph.simpleGlyph;

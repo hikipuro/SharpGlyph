@@ -4,7 +4,7 @@ namespace SharpGlyph {
 		protected int[] data;
 		protected int index;
 
-		public int Count {
+		public int Length {
 			get { return data.Length; }
 		}
 
@@ -66,8 +66,8 @@ namespace SharpGlyph {
 		//}
 
 		public void PushVector(float value) {
-			data[index] = (int)(Cos(value) * 0x4000f);
-			data[index + 1] = (int)(Sin(value) * 0x4000f);
+			data[index + 1] = (int)(Sin(value) * 0x4000);
+			data[index] = (int)(Cos(value) * 0x4000);
 			index += 2;
 		}
 
@@ -90,9 +90,9 @@ namespace SharpGlyph {
 		}
 
 		public float PopVector() {
+			int x = data[index - 2];
+			int y = data[index - 1];
 			index -= 2;
-			float x = (float)(data[index] & 0xFFFF) / 0x4000f;
-			float y = (float)(data[index + 1] & 0xFFFF) / 0x4000f;
 			return (float)Math.Atan2(y, x);
 		}
 
@@ -100,7 +100,7 @@ namespace SharpGlyph {
 			return data[index - 1];
 		}
 
-		public void Clear() {
+		public void Reset() {
 			index = 0;
 		}
 
@@ -121,17 +121,23 @@ namespace SharpGlyph {
 		}
 
 		public void PushCopy(int i) {
+			if (i <= 0) {
+				return;
+			}
 			data[index] = data[index - i];
 			index++;
 		}
 
 		public void MoveToTop(int i) {
+			if (i <= 1) {
+				return;
+			}
 			int item = data[index - i];
 			int end = index - 1;
 			for (int n = index - i; n < end; n++) {
 				data[n] = data[n + 1];
 			}
-			data[index] = item;
+			data[index - 1] = item;
 		}
 
 		public void Roll() {
@@ -142,100 +148,70 @@ namespace SharpGlyph {
 		}
 
 		public void LT() {
+			int e2 = data[index - 1];
+			int e1 = data[index - 2];
+			data[index - 2] = e1 < e2 ? 1 : 0;
 			index--;
-			int e2 = data[index];
-			int e1 = data[index - 1];
-			if (e1 < e2) {
-				data[index - 1] = 1;
-			} else {
-				data[index - 1] = 0;
-			}
 		}
 
 		public void LTEQ() {
+			int e2 = data[index - 1];
+			int e1 = data[index - 2];
+			data[index - 2] = e1 <= e2 ? 1 : 0;
 			index--;
-			int e2 = data[index];
-			int e1 = data[index - 1];
-			if (e1 <= e2) {
-				data[index - 1] = 1;
-			} else {
-				data[index - 1] = 0;
-			}
 		}
 
 		public void GT() {
+			int e2 = data[index - 1];
+			int e1 = data[index - 2];
+			data[index - 2] = e1 > e2 ? 1 : 0;
 			index--;
-			int e2 = (int)data[index];
-			int e1 = (int)data[index - 1];
-			if (e1 > e2) {
-				data[index - 1] = 1;
-			} else {
-				data[index - 1] = 0;
-			}
 		}
 
 		public void GTEQ() {
+			int e2 = data[index - 1];
+			int e1 = data[index - 2];
+			data[index - 2] = e1 >= e2 ? 1 : 0;
 			index--;
-			int e2 = (int)data[index];
-			int e1 = (int)data[index - 1];
-			if (e1 >= e2) {
-				data[index - 1] = 1;
-			} else {
-				data[index - 1] = 0;
-			}
 		}
 
-		public void Equal() {
+		public void EQ() {
+			int e1 = data[index - 1];
+			int e2 = data[index - 2];
+			data[index - 2] = e1 == e2 ? 1 : 0;
 			index--;
-			int e1 = data[index];
-			int e2 = data[index - 1];
-			if (e1 == e2) {
-				data[index - 1] = 1;
-			} else {
-				data[index - 1] = 0;
-			}
 		}
 
-		public void NotEqual() {
+		public void NEQ() {
+			int e1 = data[index - 1];
+			int e2 = data[index - 2];
+			data[index - 2] = e1 != e2 ? 1 : 0;
 			index--;
-			int e1 = data[index];
-			int e2 = data[index - 1];
-			if (e1 != e2) {
-				data[index - 1] = 1;
-			} else {
-				data[index - 1] = 0;
-			}
 		}
 
 		public void And() {
-			index--;
-			int e1 = data[index];
-			int e2 = data[index - 1];
-			if (e1 != 0 && e2 != 0) {
-				data[index - 1] = 1;
+			if (data[index - 1] != 0
+			&&  data[index - 2] != 0) {
+				data[index - 2] = 1;
 			} else {
-				data[index - 1] = 0;
+				data[index - 2] = 0;
 			}
+			index--;
 		}
 
 		public void Or() {
-			index--;
-			int e1 = data[index];
-			int e2 = data[index - 1];
-			if (e1 != 0 || e2 != 0) {
-				data[index - 1] = 1;
+			if (data[index - 1] != 0
+			||  data[index - 2] != 0) {
+				data[index - 2] = 1;
 			} else {
-				data[index - 1] = 0;
+				data[index - 2] = 0;
 			}
+			index--;
 		}
 
 		public void Not() {
 			int e = data[index - 1];
-			if (e == 0) {
-				data[index - 1] = 1;
-			} else {
-				data[index - 1] = 0;
-			}
+			data[index - 1] = e == 0 ? 1 : 0;
 		}
 
 		public void Odd(int roundState) {
@@ -251,31 +227,32 @@ namespace SharpGlyph {
 		}
 
 		public void Add() {
+			data[index - 2] += data[index - 1];
 			index--;
-			data[index - 1] += data[index];
 		}
 
 		public void Sub() {
+			data[index - 2] -= data[index - 1];
 			index--;
-			data[index - 1] -= data[index];
 		}
 
 		public void Mul() {
+			long n2 = data[index - 2];
+			n2 *= data[index - 1];
+			data[index - 2] = (int)(n2 >> 6);
 			index--;
-			long n2 = data[index - 1];
-			n2 *= data[index];
-			data[index - 1] = (int)(n2 >> 6);
 		}
 
 		public void Div() {
-			index--;
-			long n2 = data[index - 1];
+			long n2 = data[index - 2];
 			n2 <<= 6;
-			data[index - 1] = (int)(n2 / data[index]);
+			data[index - 2] = (int)(n2 / data[index - 1]);
+			index--;
 		}
 
 		public void Abs() {
-			data[index - 1] = Math.Abs(data[index - 1]);
+			int value = data[index - 1];
+			data[index - 1] = value < 0 ? -value : value;
 		}
 
 		public void Neg() {
@@ -294,13 +271,17 @@ namespace SharpGlyph {
 		}
 
 		public void Max() {
+			int value0 = data[index - 2];
+			int value1 = data[index - 1];
+			data[index - 2] = value0 > value1 ? value0 : value1;
 			index--;
-			data[index - 1] = Math.Max(data[index - 1], data[index]);
 		}
 
 		public void Min() {
+			int value0 = data[index - 2];
+			int value1 = data[index - 1];
+			data[index - 2] = value0 < value1 ? value0 : value1;
 			index--;
-			data[index - 1] = Math.Min(data[index - 1], data[index]);
 		}
 
 		public int RoundValue(int f26d6, int roundState) {
