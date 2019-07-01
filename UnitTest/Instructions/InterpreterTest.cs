@@ -649,66 +649,66 @@ namespace UnitTest.Instructions {
 		public void RTHG() {
 			Interpreter interpreter = new Interpreter(null);
 			interpreter.IsDebug = true;
-			interpreter.state.round_state = 10;
+			interpreter.state.round_state = RoundState.Off;
 			interpreter.Interpret(new byte[] {
 				0x19 // RTHG[]
 			});
-			Assert.AreEqual(0, interpreter.state.round_state);
+			Assert.AreEqual(RoundState.HalfGrid, interpreter.state.round_state);
 		}
 
 		[Test()]
 		public void RTG() {
 			Interpreter interpreter = new Interpreter(null);
 			interpreter.IsDebug = true;
-			interpreter.state.round_state = 10;
+			interpreter.state.round_state = RoundState.Off;
 			interpreter.Interpret(new byte[] {
 				0x18 // RTG[]
 			});
-			Assert.AreEqual(1, interpreter.state.round_state);
+			Assert.AreEqual(RoundState.Grid, interpreter.state.round_state);
 		}
 
 		[Test()]
 		public void RTDG() {
 			Interpreter interpreter = new Interpreter(null);
 			interpreter.IsDebug = true;
-			interpreter.state.round_state = 10;
+			interpreter.state.round_state = RoundState.Off;
 			interpreter.Interpret(new byte[] {
 				0x3D // RTDG[]
 			});
-			Assert.AreEqual(2, interpreter.state.round_state);
+			Assert.AreEqual(RoundState.DoubleGrid, interpreter.state.round_state);
 		}
 
 		[Test()]
 		public void RDTG() {
 			Interpreter interpreter = new Interpreter(null);
 			interpreter.IsDebug = true;
-			interpreter.state.round_state = 10;
+			interpreter.state.round_state = RoundState.Off;
 			interpreter.Interpret(new byte[] {
 				0x7D // RDTG[]
 			});
-			Assert.AreEqual(3, interpreter.state.round_state);
+			Assert.AreEqual(RoundState.DownToGrid, interpreter.state.round_state);
 		}
 
 		[Test()]
 		public void RUTG() {
 			Interpreter interpreter = new Interpreter(null);
 			interpreter.IsDebug = true;
-			interpreter.state.round_state = 10;
+			interpreter.state.round_state = RoundState.Off;
 			interpreter.Interpret(new byte[] {
 				0x7C // RUTG[]
 			});
-			Assert.AreEqual(4, interpreter.state.round_state);
+			Assert.AreEqual(RoundState.UpToGrid, interpreter.state.round_state);
 		}
 
 		[Test()]
 		public void ROFF() {
 			Interpreter interpreter = new Interpreter(null);
 			interpreter.IsDebug = true;
-			interpreter.state.round_state = 10;
+			interpreter.state.round_state = RoundState.HalfGrid;
 			interpreter.Interpret(new byte[] {
 				0x7A // ROFF[]
 			});
-			Assert.AreEqual(5, interpreter.state.round_state);
+			Assert.AreEqual(RoundState.Off, interpreter.state.round_state);
 		}
 
 		[Test()]
@@ -763,22 +763,54 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void SSWCI() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.singe_width_cut_in = 0;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			interpreter.Interpret(new byte[] {
+				0x1E // SSWCI[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(0x10, interpreter.state.singe_width_cut_in);
 		}
 
 		[Test()]
 		public void SSW() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.single_width_value = 0;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			interpreter.Interpret(new byte[] {
+				0x1F // SSW[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(0x10, interpreter.state.single_width_value);
 		}
 
 		[Test()]
 		public void FLIPON() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.auto_flip = false;
+			interpreter.Interpret(new byte[] {
+				0x4D // FLIPON[]
+			});
+			Assert.IsTrue(interpreter.state.auto_flip);
 		}
 
 		[Test()]
 		public void FLIPOFF() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.auto_flip = false;
+			interpreter.Interpret(new byte[] {
+				0x4E // FLIPOFF[]
+			});
+			Assert.IsFalse(interpreter.state.auto_flip);
 		}
 
 		[Test()]
@@ -893,7 +925,27 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void ALIGNPTS() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.projection_vector = 0;
+			interpreter.state.freedom_vector = 0;
+			Point2D[] points = new Point2D[2];
+			points[0] = new Point2D(1, 1);
+			points[1] = new Point2D(3, 2);
+			interpreter.debugPoints = points;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x27 // ALIGNPTS[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(2, points[0].GetDistance(points[1], 0));
+			Assert.AreEqual(2, interpreter.points[1][0].x);
+			Assert.AreEqual(1, interpreter.points[1][0].y);
+			Assert.AreEqual(2, interpreter.points[1][1].x);
+			Assert.AreEqual(2, interpreter.points[1][1].y);
 		}
 
 		[Test()]
@@ -943,177 +995,848 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void DUP() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			interpreter.Interpret(new byte[] {
+				0x20 // DUP[]
+			});
+			Assert.AreEqual(3, stack.Depth);
+			Assert.AreEqual(0x20, stack.Pop());
+			Assert.AreEqual(0x20, stack.Pop());
+			Assert.AreEqual(0x10, stack.Pop());
 		}
 
 		[Test()]
 		public void POP() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(0x30);
+			stack.Push(0x40);
+			interpreter.Interpret(new byte[] {
+				0x21 // POP[]
+			});
+			Assert.AreEqual(3, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
 		}
 
 		[Test()]
 		public void CLEAR() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(0x30);
+			stack.Push(0x40);
+			interpreter.Interpret(new byte[] {
+				0x22 // CLEAR[]
+			});
+			Assert.AreEqual(0, stack.Depth);
 		}
 
 		[Test()]
 		public void SWAP() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x20);
+			stack.Push(0x10);
+			interpreter.Interpret(new byte[] {
+				0x23 // SWAP[]
+			});
+			Assert.AreEqual(2, stack.Depth);
+			Assert.AreEqual(0x20, stack.Pop());
+			Assert.AreEqual(0x10, stack.Pop());
 		}
 
 		[Test()]
 		public void DEPTH() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			interpreter.Interpret(new byte[] {
+				0x24 // DEPTH[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(0x10);
+			interpreter.Interpret(new byte[] {
+				0x24 // DEPTH[]
+			});
+			Assert.AreEqual(2, stack.Depth);
+			Assert.AreEqual(1, stack.Pop());
+			Assert.AreEqual(0x10, stack.Pop());
 		}
 
 		[Test()]
 		public void CINDEX() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(0x30);
+			stack.Push(0x40);
+			stack.Push(2);
+			interpreter.Interpret(new byte[] {
+				0x25 // CINDEX[]
+			});
+			Assert.AreEqual(5, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
+			Assert.AreEqual(0x40, stack.Pop());
+			Assert.AreEqual(0x30, stack.Pop());
+			Assert.AreEqual(0x20, stack.Pop());
+			Assert.AreEqual(0x10, stack.Pop());
+			stack.Push(0);
+			try {
+				interpreter.Interpret(new byte[] {
+					0x25 // CINDEX[]
+				});
+				Assert.Fail();
+			} catch (InvalidOperationException) {
+			}
 		}
 
 		[Test()]
 		public void MINDEX() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(0x30);
+			stack.Push(0x40);
+			stack.Push(2);
+			interpreter.Interpret(new byte[] {
+				0x26 // MINDEX[]
+			});
+			Assert.AreEqual(4, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
+			Assert.AreEqual(0x40, stack.Pop());
+			Assert.AreEqual(0x20, stack.Pop());
+			Assert.AreEqual(0x10, stack.Pop());
+			stack.Push(0);
+			try {
+				interpreter.Interpret(new byte[] {
+					0x26 // MINDEX[]
+				});
+				Assert.Fail();
+			} catch (InvalidOperationException) {
+			}
 		}
 
 		[Test()]
 		public void ROLL() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.singe_width_cut_in = 0;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(1);
+			stack.Push(2);
+			stack.Push(3);
+			interpreter.Interpret(new byte[] {
+				0x8A // ROLL[]
+			});
+			Assert.AreEqual(3, stack.Depth);
+			Assert.AreEqual(1, stack.Pop());
+			Assert.AreEqual(3, stack.Pop());
+			Assert.AreEqual(2, stack.Pop());
 		}
 
 		[Test()]
 		public void IF() {
-			Assert.Fail();
-		}
-
-		[Test()]
-		public void ELSE() {
-			Assert.Fail();
-		}
-
-		[Test()]
-		public void EIF() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x58, // IF[]
+				0x60  // ADD[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
+			stack.Push(0x30);
+			stack.Push(0x20);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x58, // IF[]
+				0x60, // ADD[]
+				0x1B, // ELSE[]
+				0x61, // SUB[]
+				0x59  // EIF[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x50, stack.Pop());
+			stack.Push(0x20);
+			stack.Push(0x10);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x58, // IF[]
+				0x60, 0x60, 0x60,  // ADD[]
+				0x1B, // ELSE[]
+				0x61, // SUB[]
+				0x59  // EIF[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x10, stack.Pop());
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x58, // IF[]
+				0x60, 0x60, 0x60,  // ADD[]
+				0x59  // EIF[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			stack.Push(0x30);
+			stack.Push(0x10);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x58, // IF[]
+				0x60, 0x60, 0x60,  // ADD[]
+				0x58, // IF[]
+				0x60, 0x60, 0x60,  // ADD[]
+				0x59, // EIF[]
+				0x60, 0x60, 0x60,  // ADD[]
+				0x1B, // ELSE[]
+				0x61, // SUB[]
+				0x59  // EIF[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x20, stack.Pop());
 		}
 
 		[Test()]
 		public void JROT() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(2);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x78, // JROT[]
+				0x60, // ADD[]
+				0x60, // ADD[]
+				0x60  // ADD[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(2);
+			stack.Push(0);
+			try {
+				interpreter.Interpret(new byte[] {
+					0x78, // JROT[]
+					0x60, // ADD[]
+					0x60, // ADD[]
+					0x60  // ADD[]
+				});
+				Assert.Fail();
+			} catch (IndexOutOfRangeException) {
+			}
 		}
 
 		[Test()]
 		public void JMPR() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(2);
+			interpreter.Interpret(new byte[] {
+				0x1C, // JMPR[]
+				0x60, // ADD[]
+				0x60, // ADD[]
+				0x60  // ADD[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
 		}
 
 		[Test()]
 		public void JROF() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(2);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x79, // JROF[]
+				0x60, // ADD[]
+				0x60, // ADD[]
+				0x60  // ADD[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(2);
+			stack.Push(1);
+			try {
+				interpreter.Interpret(new byte[] {
+					0x79, // JROF[]
+					0x60, // ADD[]
+					0x60, // ADD[]
+					0x60  // ADD[]
+				});
+				Assert.Fail();
+			} catch (IndexOutOfRangeException) {
+			}
 		}
 
 		[Test()]
 		public void LT() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.singe_width_cut_in = 0;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x50 // LT[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(1);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x50 // LT[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x50 // LT[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x50 // LT[]
+			});
+			Assert.AreEqual(1, stack.Pop());
 		}
 
 		[Test()]
 		public void LTEQ() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.singe_width_cut_in = 0;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x51 // LTEQ[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(1);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x51 // LTEQ[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x51 // LTEQ[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x51 // LTEQ[]
+			});
+			Assert.AreEqual(1, stack.Pop());
 		}
 
 		[Test()]
 		public void GT() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.singe_width_cut_in = 0;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x52 // GT[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(1);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x52 // GT[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x52 // GT[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x52 // GT[]
+			});
+			Assert.AreEqual(0, stack.Pop());
 		}
 
 		[Test()]
 		public void GTEQ() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.singe_width_cut_in = 0;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x53 // GTEQ[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(1);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x53 // GTEQ[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x53 // GTEQ[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x53 // GTEQ[]
+			});
+			Assert.AreEqual(0, stack.Pop());
 		}
 
 		[Test()]
 		public void EQ() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.singe_width_cut_in = 0;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x54 // EQ[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(1);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x54 // EQ[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x54 // EQ[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x54 // EQ[]
+			});
+			Assert.AreEqual(0, stack.Pop());
 		}
 
 		[Test()]
 		public void NEQ() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.singe_width_cut_in = 0;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x55 // NEQ[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(1);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x55 // NEQ[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x55 // NEQ[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x55 // NEQ[]
+			});
+			Assert.AreEqual(1, stack.Pop());
 		}
 
 		[Test()]
 		public void ODD() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.round_state = RoundState.Off;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			interpreter.Interpret(new byte[] {
+				0x56 // ODD[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(0x40);
+			interpreter.Interpret(new byte[] {
+				0x56 // ODD[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(0x80);
+			interpreter.Interpret(new byte[] {
+				0x56 // ODD[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			// TODO: add another roundState test
 		}
 
 		[Test()]
 		public void EVEN() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.round_state = RoundState.Off;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			interpreter.Interpret(new byte[] {
+				0x57 // EVEN[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(0x40);
+			interpreter.Interpret(new byte[] {
+				0x57 // EVEN[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(0x80);
+			interpreter.Interpret(new byte[] {
+				0x57 // EVEN[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			// TODO: add another roundState test
 		}
 
 		[Test()]
 		public void AND() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			interpreter.Interpret(new byte[] {
+				0x5A // AND[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(0);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x5A // AND[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x5A // AND[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x5A // AND[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			Assert.AreEqual(0, stack.Depth);
 		}
 
 		[Test()]
 		public void OR() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			interpreter.Interpret(new byte[] {
+				0x5B // OR[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(0);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x5B // OR[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x5B // OR[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x5B // OR[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			Assert.AreEqual(0, stack.Depth);
 		}
 
 		[Test()]
 		public void NOT() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			interpreter.Interpret(new byte[] {
+				0x5C // NOT[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x5C // NOT[]
+			});
+			Assert.AreEqual(1, stack.Pop());
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x5C // NOT[]
+			});
+			Assert.AreEqual(0, stack.Pop());
+			Assert.AreEqual(0, stack.Depth);
 		}
 
 		[Test()]
 		public void ADD() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			interpreter.Interpret(new byte[] {
+				0x60 // ADD[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
 		}
 
 		[Test()]
 		public void SUB() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x20);
+			stack.Push(0x10);
+			interpreter.Interpret(new byte[] {
+				0x61 // SUB[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x10, stack.Pop());
 		}
 
 		[Test()]
 		public void DIV() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			interpreter.Interpret(new byte[] {
+				0x62 // DIV[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x10 * 64 / 0x20, stack.Pop());
 		}
 
 		[Test()]
 		public void MUL() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			interpreter.Interpret(new byte[] {
+				0x63 // MUL[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x10 * 0x20 / 64, stack.Pop());
 		}
 
 		[Test()]
 		public void ABS() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(-0x10);
+			interpreter.Interpret(new byte[] {
+				0x64 // ABS[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x10, stack.Pop());
+			stack.Push(0x10);
+			interpreter.Interpret(new byte[] {
+				0x64 // ABS[]
+			});
+			Assert.AreEqual(0x10, stack.Pop());
 		}
 
 		[Test()]
 		public void NEG() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(-0x10);
+			interpreter.Interpret(new byte[] {
+				0x65 // NEG[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x10, stack.Pop());
+			stack.Push(0x10);
+			interpreter.Interpret(new byte[] {
+				0x65 // NEG[]
+			});
+			Assert.AreEqual(-0x10, stack.Pop());
 		}
 
 		[Test()]
 		public void FLOOR() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x3F);
+			interpreter.Interpret(new byte[] {
+				0x66 // FLOOR[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0, stack.Pop());
+			stack.Push(0xFF);
+			interpreter.Interpret(new byte[] {
+				0x66 // FLOOR[]
+			});
+			Assert.AreEqual(0xC0, stack.Pop());
+			// TODO: add minus
 		}
 
 		[Test()]
 		public void CEILING() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x3F);
+			interpreter.Interpret(new byte[] {
+				0x67 // CEILING[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x40, stack.Pop());
+			stack.Push(0xFF);
+			interpreter.Interpret(new byte[] {
+				0x67 // CEILING[]
+			});
+			Assert.AreEqual(0x100, stack.Pop());
+			stack.Push(0x40);
+			interpreter.Interpret(new byte[] {
+				0x67 // CEILING[]
+			});
+			Assert.AreEqual(0x40, stack.Pop());
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x67 // CEILING[]
+			});
+			Assert.AreEqual(0x40, stack.Pop());
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x67 // CEILING[]
+			});
+			Assert.AreEqual(0, stack.Pop());
 		}
 
 		[Test()]
 		public void MAX() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(1);
+			stack.Push(10);
+			interpreter.Interpret(new byte[] {
+				0x8B // MAX[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(10, stack.Pop());
 		}
 
 		[Test()]
 		public void MIN() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(1);
+			stack.Push(10);
+			interpreter.Interpret(new byte[] {
+				0x8C // MIN[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(1, stack.Pop());
 		}
 
 		[Test()]
@@ -1128,12 +1851,34 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void FDEF() {
-			Assert.Fail();
-		}
-
-		[Test()]
-		public void ENDF() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x2C, // FDEF[]
+				0x60, // ADD[]
+				0x2D  // ENDF[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			stack.Push(2);
+			interpreter.Interpret(new byte[] {
+				0x2C, // FDEF[]
+				0x60, // ADD[]
+				0x58, // IF[]
+				0x60, // ADD[]
+				0x59, // EIF[]
+				0x2D  // ENDF[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(2, interpreter.funcs.GetFuncCount());
+			byte[] bytes = interpreter.funcs.CALL(1);
+			Assert.AreEqual(1, bytes.Length);
+			bytes = interpreter.funcs.CALL(2);
+			Assert.AreEqual(4, bytes.Length);
+			bytes = interpreter.funcs.CALL(0);
+			Assert.IsNull(bytes);
 		}
 
 		[Test()]
@@ -1153,7 +1898,20 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void DEBUG() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			bool success = false;
+			interpreter.Debug += (int n) => {
+				success = true;
+			};
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x4F // DEBUG[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.IsTrue(success);
 		}
 
 		[Test()]
@@ -1168,7 +1926,15 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void AA() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x7F // AA[]
+			});
+			Assert.AreEqual(0, stack.Depth);
 		}
 	}
 }

@@ -14,13 +14,20 @@ namespace SharpGlyph {
 			this.y = y;
 		}
 
+		public Point2D Clone() {
+			return new Point2D(x, y);
+		}
+
 		public float GetAngle(Point2D p) {
 			return (float)Math.Atan2(p.y - y, p.x - x);
 		}
 
 		public float GetLength(float vector) {
 			if (vector.Equals(0f)) {
-				return Sqrt(x * x + y * y);
+				return x;
+			}
+			if (vector.Equals(HalfPI)) {
+				return y;
 			}
 			float cos = Cos(-vector);
 			float sin = Sin(-vector);
@@ -28,6 +35,11 @@ namespace SharpGlyph {
 			float dy = y * cos + x * sin;
 			float sign = dx < 0 || dy < 0 ? -1 : 1;
 			return sign * Sqrt(dx * dx + dy * dy);
+		}
+
+		public float GetDistance(Point2D p, float vector) {
+			Point2D d = new Point2D(p.x - x, p.y - y);
+			return d.GetLength(vector);
 		}
 
 		protected static float Sin(float value) {

@@ -406,6 +406,7 @@
     <Compile Include="SharpGlyph\Variations\VariationRegion.cs" />
     <Compile Include="SharpGlyph\Variations\VariationRegionList.cs" />
     <Compile Include="SharpGlyph\Instructions\Point2D.cs" />
+    <Compile Include="SharpGlyph\Instructions\RoundState.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="SharpGlyph\" />

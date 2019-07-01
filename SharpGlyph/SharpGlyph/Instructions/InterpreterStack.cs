@@ -214,13 +214,13 @@ namespace SharpGlyph {
 			data[index - 1] = e == 0 ? 1 : 0;
 		}
 
-		public void Odd(int roundState) {
+		public void Odd(RoundState roundState) {
 			int e1 = data[index - 1];
 			e1 = RoundValue(e1, roundState);
 			data[index - 1] = (e1 & 0x40) > 0 ? 1 : 0;
 		}
 
-		public void Even(int roundState) {
+		public void Even(RoundState roundState) {
 			int e1 = data[index - 1];
 			e1 = RoundValue(e1, roundState);
 			data[index - 1] = (e1 & 0x40) == 0 ? 1 : 0;
@@ -246,7 +246,12 @@ namespace SharpGlyph {
 		public void Div() {
 			long n2 = data[index - 2];
 			n2 <<= 6;
-			data[index - 2] = (int)(n2 / data[index - 1]);
+			int n1 = data[index - 1];
+			if (n1 == 0) {
+				data[index - 2] = 0;
+			} else {
+				data[index - 2] = (int)(n2 / data[index - 1]);
+			}
 			index--;
 		}
 
@@ -284,17 +289,17 @@ namespace SharpGlyph {
 			index--;
 		}
 
-		public int RoundValue(int f26d6, int roundState) {
-			if (roundState == 5) {
+		public int RoundValue(int f26d6, RoundState roundState) {
+			if (roundState == RoundState.Off) {
 				// Round Off
 				return f26d6;
 			}
 			switch (roundState) {
-				case 0: // Round To Half Grid
+				case RoundState.HalfGrid:
 					f26d6 &= 0x7FFFFFC0;
 					f26d6 |= 0x20;
 					break;
-				case 1: // Round To Grid
+				case RoundState.Grid:
 					if ((f26d6 & 0x20) > 0) {
 						f26d6 &= 0x7FFFFFC0;
 						f26d6 += 0x40;
@@ -302,13 +307,13 @@ namespace SharpGlyph {
 						f26d6 &= 0x7FFFFFC0;
 					}
 					break;
-				case 2: // Round To Double Grid
+				case RoundState.DoubleGrid:
 					f26d6 &= 0x7FFFFFE0;
 					break;
-				case 3: // Round Down To Grid
+				case RoundState.DownToGrid:
 					f26d6 &= 0x7FFFFFC0;
 					break;
-				case 4: // Round Up To Grid
+				case RoundState.UpToGrid:
 					if ((f26d6 & 0x3F) > 0) {
 						f26d6 &= 0x7FFFFFC0;
 						f26d6 += 0x40;
@@ -322,17 +327,35 @@ namespace SharpGlyph {
 
 		public void Round(GraphicsState state) {
 			float value = data[index - 1];
-			float x = value * Cos(state.projection_vector);
-			float y = value * Sin(state.projection_vector);
-			float sign = x < 0 || y < 0 ? -1 : 1;
-			value = sign * Sqrt(x * x + y * y);
-			if (state.round_state == 5) {
+			value /= 64;
+			Point2D p = new Point2D(value, value);
+			float d = p.GetLength(state.projection_vector);
+			if (state.round_state == RoundState.Off) {
 				// Round Off
-				data[index - 1] = (int)(value * 64);
+				data[index - 1] = (int)(d * 64);
 				return;
 			}
 			//uint f26d6 = (uint)data[index - 1];
-			data[index - 1] = RoundValue((int)(value * 64), state.round_state);
+			data[index - 1] = RoundValue((int)(d * 64), state.round_state);
+		}
+
+		public void Round(GraphicsState state, byte ab) {
+			float value = data[index - 1];
+			value /= 64;
+			Point2D p = new Point2D(value, value);
+			float d = p.GetLength(state.projection_vector);
+			if (ab == 0) { // Gray
+				data[index - 1] = (int)(d * 64);
+				return;
+			}
+			if (ab == 1) { // Black
+				d += 0.5f;
+			}
+			if (ab == 2) { // White
+				d -= 0.5f;
+			}
+			//uint f26d6 = (uint)data[index - 1];
+			data[index - 1] = RoundValue((int)(d * 64), state.round_state);
 		}
 
 		protected float Sin(float value) {

@@ -844,21 +844,21 @@ namespace UnitTest.Instructions {
 			int value;
 			stack.Init(10);
 			try {
-				stack.Odd(0);
+				stack.Odd(RoundState.Off);
 				Assert.Fail();
 			} catch (IndexOutOfRangeException) {
 			}
 			Assert.AreEqual(0, stack.Depth);
 			stack.Push(1 * 64);
-			stack.Odd(0);
+			stack.Odd(RoundState.Off);
 			value = stack.Pop();
 			Assert.AreEqual(1, value);
 			stack.Push(2 * 64);
-			stack.Odd(0);
+			stack.Odd(RoundState.Off);
 			value = stack.Pop();
 			Assert.AreEqual(0, value);
 			stack.Push(1 * 32);
-			stack.Odd(0);
+			stack.Odd(RoundState.Off);
 			value = stack.Pop();
 			Assert.AreEqual(0, value);
 			// TODO: add another roundState test
@@ -870,21 +870,21 @@ namespace UnitTest.Instructions {
 			int value;
 			stack.Init(10);
 			try {
-				stack.Even(0);
+				stack.Even(RoundState.Off);
 				Assert.Fail();
 			} catch (IndexOutOfRangeException) {
 			}
 			Assert.AreEqual(0, stack.Depth);
 			stack.Push(1 * 64);
-			stack.Even(0);
+			stack.Even(RoundState.Off);
 			value = stack.Pop();
 			Assert.AreEqual(0, value);
 			stack.Push(2 * 64);
-			stack.Even(0);
+			stack.Even(RoundState.Off);
 			value = stack.Pop();
 			Assert.AreEqual(1, value);
 			stack.Push(1 * 32);
-			stack.Even(0);
+			stack.Even(RoundState.Off);
 			value = stack.Pop();
 			Assert.AreEqual(1, value);
 			// TODO: add another roundState test

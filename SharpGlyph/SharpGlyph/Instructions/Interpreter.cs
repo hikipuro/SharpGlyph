@@ -7,10 +7,13 @@ namespace SharpGlyph {
 		public bool IsDebug = false;
 		public int ppem = 24;
 		public InterpreterStack stack;
+		public InterpreterFuncs funcs;
 		public int[] storage;
 		public CvtTable cvt;
 		public GraphicsState state;
-		protected InterpreterFuncs funcs;
+		public Point2D[] debugPoints;
+		public Point2D[] origin;
+		public Point2D[][] points;
 		protected InterpreterStream stream;
 		protected GetInfoResult getInfoResult;
 		//protected MaxpTable maxp;
@@ -28,6 +31,7 @@ namespace SharpGlyph {
 			stream = new InterpreterStream();
 			state = new GraphicsState();
 			getInfoResult = new GetInfoResult();
+			//points = new Point2D[2][];
 			if (font != null) {
 				MaxpTable maxp = font.Tables.maxp;
 				cvt = font.Tables.cvt;
@@ -56,52 +60,66 @@ namespace SharpGlyph {
 				stack.Init(maxStackElements);
 				Array.Clear(storage, 0, storage.Length);
 			}
-			Point2D[] origin = null;
-			Point2D[][] points = new Point2D[2][];
+			origin = null;
+			points = new Point2D[2][];
 
-			if (glyph != null) {
-				glyph = glyph.Clone();
-				SimpleGlyph simpleGlyph = glyph.simpleGlyph;
-				if (simpleGlyph != null) {
-					short[] xCoordinates = simpleGlyph.xCoordinates;
-					short[] yCoordinates = simpleGlyph.yCoordinates;
-					int length = xCoordinates.Length;
-					origin = new Point2D[length + 4];
-					points[0] = new Point2D[maxTwilightPoints];
-					points[1] = new Point2D[length + 4];
-					for (int i = 0; i < length; i++) {
-						int x = xCoordinates[i];
-						int y = yCoordinates[i];
-						origin[i] = new Point2D(x, y);
-						if (i < maxTwilightPoints) {
-							points[0][i] = new Point2D(x, y);
+			if (IsDebug == false) {
+				if (glyph != null) {
+					glyph = glyph.Clone();
+					SimpleGlyph simpleGlyph = glyph.simpleGlyph;
+					if (simpleGlyph != null) {
+						short[] xCoordinates = simpleGlyph.xCoordinates;
+						short[] yCoordinates = simpleGlyph.yCoordinates;
+						int length = xCoordinates.Length;
+						origin = new Point2D[length + 4];
+						points[0] = new Point2D[maxTwilightPoints];
+						points[1] = new Point2D[length + 4];
+						for (int i = 0; i < length; i++) {
+							int x = xCoordinates[i];
+							int y = yCoordinates[i];
+							origin[i] = new Point2D(x, y);
+							if (i < maxTwilightPoints) {
+								points[0][i] = new Point2D(x, y);
+							}
+							points[1][i] = new Point2D(x, y);
 						}
-						points[1][i] = new Point2D(x, y);
+						for (int i = length; i < length + 4; i++) {
+							origin[i] = new Point2D(0, 0);
+							points[1][i] = new Point2D(0, 0);
+							if (i < maxTwilightPoints) {
+								points[0][i] = new Point2D(0, 0);
+							}
+						}
 					}
-					for (int i = length; i < length + 4; i++) {
+				} else {
+					//origin = new Point2D[4];
+					//points[0] = new Point2D[4];
+					//points[1] = new Point2D[4];
+					//*
+					origin = new Point2D[4];
+					points[0] = new Point2D[maxTwilightPoints];
+					points[1] = new Point2D[4];
+					for (int i = 0; i < 4; i++) {
 						origin[i] = new Point2D(0, 0);
 						points[1][i] = new Point2D(0, 0);
 						if (i < maxTwilightPoints) {
 							points[0][i] = new Point2D(0, 0);
 						}
 					}
+					//*/
 				}
 			} else {
-				origin = new Point2D[0];
-				points[0] = new Point2D[0];
-				points[1] = new Point2D[0];
-				/*
-				origin = new Point2D[4];
-				points[0] = new Point2D[maxTwilightPoints];
-				points[1] = new Point2D[4];
-				for (int i = 0; i < 4; i++) {
-					origin[i] = new Point2D(0, 0);
-					points[1][i] = new Point2D(0, 0);
-					if (i < maxTwilightPoints) {
-						points[0][i] = new Point2D(0, 0);
+				if (debugPoints != null) {
+					origin = new Point2D[debugPoints.Length];
+					points[0] = new Point2D[debugPoints.Length];
+					points[1] = new Point2D[debugPoints.Length];
+					for (int i = 0; i < debugPoints.Length; i++) {
+						Point2D p = debugPoints[i];
+						origin[i] = p.Clone();
+						points[0][i] = p.Clone();
+						points[1][i] = p.Clone();
 					}
 				}
-				*/
 			}
 
 			while (true) {
@@ -172,14 +190,14 @@ namespace SharpGlyph {
 						{
 							int v = stack.Pop();
 							int l = stack.Pop();
-							cvt.data[l] = v * 0x40;
+							cvt.data[l] = v;
 						}
 						break;
 					case 0x70: // WCVTF[ ] (Write Control Value Table in FUnits)
 						{
 							int v = stack.Pop();
 							int l = stack.Pop();
-							cvt.data[l] = v;
+							cvt.data[l] = v / 64;
 						}
 						break;
 					case 0x45: // RCVT[ ] (Read Control Value Table)
@@ -317,22 +335,22 @@ namespace SharpGlyph {
 						state.zp0 = state.zp1 = state.zp2 = stack.Pop();
 						break;
 					case 0x19: // RTHG[ ] (Round To Half Grid)
-						state.round_state = 0;
+						state.round_state = RoundState.HalfGrid;
 						break;
 					case 0x18: // RTG[ ] (Round To Grid)
-						state.round_state = 1;
+						state.round_state = RoundState.Grid;
 						break;
 					case 0x3D: // RTDG[ ] (Round To Double Grid)
-						state.round_state = 2;
+						state.round_state = RoundState.DoubleGrid;
 						break;
 					case 0x7D: // RDTG[ ] (Round Down To Grid)
-						state.round_state = 3;
+						state.round_state = RoundState.DownToGrid;
 						break;
 					case 0x7C: // RUTG[ ] (Round Up To Grid)
-						state.round_state = 4;
+						state.round_state = RoundState.UpToGrid;
 						break;
 					case 0x7A: // ROFF[ ] (Round OFF)
-						state.round_state = 5;
+						state.round_state = RoundState.Off;
 						break;
 					case 0x76: // SROUND[ ] (Super ROUND)
 						stack.Pop();
@@ -344,23 +362,29 @@ namespace SharpGlyph {
 						state.loop = stack.Pop();
 						break;
 					case 0x1A: // SMD[ ] (Set Minimum_Distance)
-						state.minimum_distance = (uint)stack.Pop();
+						state.minimum_distance = stack.Pop();
 						break;
 					case 0x8E: // INSTCTRL (INSTRuction execution ConTRoL)
-						stack.Pop();
-						stack.Pop();
+						{
+							int s = stack.Pop();
+							int value = stack.Pop();
+						}
 						break;
 					case 0x85: // SCANCTRL[ ] (SCAN conversion ConTRoL)
-						stack.Pop();
+						{
+							int n = stack.Pop();
+						}
 						break;
 					case 0x8D: // SCANTYPE[ ] (SCANTYPE)
-						stack.Pop();
+						{
+							int n = stack.Pop();
+						}
 						break;
 					case 0x1D: // SCVTCI[ ] (Set Control Value Table Cut In)
-						state.control_value_cut_in = (uint)stack.Pop();
+						state.control_value_cut_in = stack.Pop();
 						break;
 					case 0x1E: // SSWCI[ ] (Set Single_Width_Cut_In)
-						state.singe_width_cut_in = (uint)stack.Pop();
+						state.singe_width_cut_in = stack.Pop();
 						break;
 					case 0x1F: // SSW[ ] (Set Single-width)
 						state.single_width_value = stack.Pop();
@@ -387,9 +411,9 @@ namespace SharpGlyph {
 					case 0x46: // GC[a] (Get Coordinate projected onto the projection_vector)
 						{
 							int p = stack.Pop();
-							if (p >= points[state.zp2].Length) {
-								break;
-							}
+							//if (p >= points[state.zp2].Length) {
+							//	break;
+							//}
 							stack.Push(
 								GC(
 									points[state.zp2][p],
@@ -410,11 +434,11 @@ namespace SharpGlyph {
 						{
 							int value = stack.Pop();
 							int p = stack.Pop();
-							if (p < 0 || p >= points[state.zp2].Length) {
-								break;
-							}
+							//if (p < 0 || p >= points[state.zp2].Length) {
+							//	break;
+							//}
 							SCFS(
-								ref points[state.zp2][p],
+								points[state.zp2][p],
 								value,
 								state.freedom_vector,
 								state.projection_vector
@@ -426,17 +450,19 @@ namespace SharpGlyph {
 						{
 							int p1 = stack.Pop();
 							int p2 = stack.Pop();
+							/*
 							if (p1 >= points[state.zp1].Length) {
 								break;
 							}
 							if (p2 >= points[state.zp0].Length) {
 								break;
 							}
+							*/
 							stack.Push(
 								MD(
 									points[state.zp1][p1],
 									points[state.zp0][p2],
-									(opcode & 1) == 0,
+									(opcode & 1) > 0,
 									state
 								)
 							);
@@ -458,25 +484,38 @@ namespace SharpGlyph {
 					//
 					case 0x80: // FLIPPT[ ] (FLIP PoinT)
 						{
-							for (int i = 0; i < state.loop; i++) {
-								FLIPPT(glyph, stack.Pop());
+							int loop = state.loop;
+							for (int i = 0; i < loop; i++) {
+								int p = stack.Pop();
+								FLIPPT(glyph, p);
 							}
 							state.loop = 1;
 						}
 						break;
 					case 0x81: // FLIPRGON[ ] (FLIP RanGe ON)
-						FLIPRGON(glyph, stack.Pop(), stack.Pop());
+						{
+							int high = stack.Pop();
+							int low = stack.Pop();
+							FLIPRGON(glyph, high, low);
+						}
 						break;
 					case 0x82: // FLIPRGOFF[ ] (FLIP RanGe OFF)
-						FLIPRGOFF(glyph, stack.Pop(), stack.Pop());
+						{
+							int high = stack.Pop();
+							int low = stack.Pop();
+							FLIPRGOFF(glyph, high, low);
+						}
 						break;
 					case 0x32: // SHP[a] (SHift Point by the last point)
 						{
-							for (int i = 0; i < state.loop; i++) {
+							int loop = state.loop;
+							for (int i = 0; i < loop; i++) {
+								int p = stack.Pop();
 								SHP(
-									ref points[state.zp1][state.rp2],
-									ref origin[state.rp2],
-									ref points[state.zp2][stack.Pop()],
+									points[state.zp1][state.rp2],
+									origin[state.rp2],
+									points[state.zp2][p],
+									state.projection_vector,
 									state.freedom_vector
 								);
 							}
@@ -485,11 +524,14 @@ namespace SharpGlyph {
 						break;
 					case 0x33: // SHP[a]
 						{
-							for (int i = 0; i < state.loop; i++) {
+							int loop = state.loop;
+							for (int i = 0; i < loop; i++) {
+								int p = stack.Pop();
 								SHP(
-									ref points[state.zp0][state.rp1],
-									ref origin[state.rp1],
-									ref points[state.zp2][stack.Pop()],
+									points[state.zp0][state.rp1],
+									origin[state.rp1],
+									points[state.zp2][p],
+									state.projection_vector,
 									state.freedom_vector
 								);
 							}
@@ -499,32 +541,36 @@ namespace SharpGlyph {
 					// SHC[a] (SHift Contour by the last point)
 					case 0x34: case 0x35:
 						{
+							int c = stack.Pop();
 							SHC(
 								glyph,
 								points,
 								origin,
 								state,
-								stack.Pop(),
+								c,
 								(opcode & 1) > 0
 							);
 						}
 						break;
 					case 0x36: // SHZ[a] (SHift Zone by the last pt)
-						stack.Pop();
-						stack.Pop();
+						{
+							int e = stack.Pop();
+						}
 						break;
 					case 0x37: // SHZ[a]
-						stack.Pop();
-						stack.Pop();
+						{
+							int e = stack.Pop();
+						}
 						break;
 					case 0x38: // SHPIX[ ] (SHift point by a PIXel amount)
 						{
 							float amount = stack.PopF26Dot6();
-							for (int i = 0; i < state.loop; i++) {
+							int loop = state.loop;
+							for (int i = 0; i < loop; i++) {
 								int p = stack.Pop();
 								Point2D point = points[state.zp2][p];
-								point.x = Cos(state.freedom_vector) * amount;
-								point.y = Sin(state.freedom_vector) * amount;
+								point.x += Cos(state.freedom_vector) * amount;
+								point.y += Sin(state.freedom_vector) * amount;
 							}
 							state.loop = 1;
 						}
@@ -534,9 +580,9 @@ namespace SharpGlyph {
 						{
 							float d = stack.PopF26Dot6();
 							int p = stack.Pop();
-							if (p >= points[state.zp1].Length) {
-								break;
-							}
+							//if (p >= points[state.zp1].Length) {
+							//	break;
+							//}
 							MSIRP(
 								ref points[state.zp0][state.rp0],
 								ref points[state.zp1][p],
@@ -546,12 +592,12 @@ namespace SharpGlyph {
 							);
 						}
 						break;
-					// MDAP[ a ] (Move Direct Absolute Point)
+					// MDAP[a] (Move Direct Absolute Point)
 					case 0x2E: case 0x2F:
 						{
 							int p = stack.Pop();
 							MDAP(
-								ref points[state.zp0][p],
+								points[state.zp0][p],
 								p,
 								(opcode & 1) > 0,
 								state
@@ -586,14 +632,14 @@ namespace SharpGlyph {
 						{
 							int p = stack.Pop();
 							MDRP(
-								ref points[state.zp0][state.rp0],
-								ref origin[state.rp0],
-								ref points[state.zp1][p],
+								points[state.zp0][state.rp0],
+								origin[state.rp0],
+								points[state.zp1][p],
 								state, p,
-								(opcode & 1) > 0,
-								(opcode & 2) > 0,
-								(opcode & 4) > 0,
-								(opcode >> 3) & 3
+								(opcode & 0x10) > 0,
+								(opcode & 0x08) > 0,
+								(opcode & 0x04) > 0,
+								opcode & 3
 							);
 						}
 						break;
@@ -616,36 +662,37 @@ namespace SharpGlyph {
 							Console.WriteLine("state.zp1: {0}", state.zp1);
 							Console.WriteLine("state.rp0: {0}", state.rp0);
 							//*/
-							//*
+							/*
 							if (state.rp0 >= points[state.zp0].Length) {
 								break;
 							}
 							if (p >= points[state.zp1].Length) {
 								break;
 							}
+							//*/
 							MIRP(
-								ref points[state.zp0][state.rp0],
-								ref points[state.zp1][p],
+								points[state.zp0][state.rp0],
+								points[state.zp1][p],
 								state, p, cvt.data[n],
-								(opcode & 1) > 0,
-								(opcode & 2) > 0,
-								(opcode & 4) > 0,
-								(opcode >> 3) & 3
+								(opcode & 0x10) > 0,
+								(opcode & 0x08) > 0,
+								(opcode & 0x04) > 0,
+								opcode & 3
 							);
 							//*/
 						}
 						break;
 					case 0x3C: // ALIGNRP[ ] (ALIGN Relative Point)
 						{
-							int length = state.loop;
-							for (int i = 0; i < length; i++) {
+							int loop = state.loop;
+							for (int i = 0; i < loop; i++) {
 								int p = stack.Pop();
-								if (p >= points[state.zp1].Length) {
-									continue;
-								}
+								//if (p >= points[state.zp1].Length) {
+								//	continue;
+								//}
 								ALIGNRP(
-									ref points[state.zp1][p],
-									ref points[state.zp0][state.rp0],
+									points[state.zp1][p],
+									points[state.zp0][state.rp0],
 									state.freedom_vector,
 									state.projection_vector
 								);
@@ -674,8 +721,8 @@ namespace SharpGlyph {
 							int p1 = stack.Pop();
 							int p2 = stack.Pop();
 							ALIGNPTS(
-								ref points[state.zp1][p1],
-								ref points[state.zp0][p2],
+								points[state.zp1][p1],
+								points[state.zp0][p2],
 								state.freedom_vector,
 								state.projection_vector
 							);
@@ -683,8 +730,8 @@ namespace SharpGlyph {
 						break;
 					case 0x39: // IP[ ] (Interpolate Point by the last relative stretch)
 						{
-							int length = state.loop;
-							for (int i = 0; i < length; i++) {
+							int loop = state.loop;
+							for (int i = 0; i < loop; i++) {
 								int p = stack.Pop();
 								IP(
 									points,
@@ -697,7 +744,9 @@ namespace SharpGlyph {
 						}
 						break;
 					case 0x29: // UTP[ ] (UnTouch Point)
-						stack.Pop();
+						{
+							int p = stack.Pop();
+						}
 						break;
 					case 0x30: // IUP[a] (Interpolate Untouched Points through the outline)
 						IUPY(glyph, origin, points[state.zp2]);
@@ -842,10 +891,26 @@ namespace SharpGlyph {
 						stack.PushDepth();
 						break;
 					case 0x25: // CINDEX[ ] (Copy the INDEXed element to the top of the stack)
-						stack.PushCopy(stack.Pop());
+						{
+							int k = stack.Pop();
+							if (k <= 0) {
+								throw new InvalidOperationException(
+									"CINDEX: argument must be positive number"
+								);
+							}
+							stack.PushCopy(k);
+						}
 						break;
 					case 0x26: // MINDEX[ ] (Move the INDEXed element to the top of the stack)
-						stack.MoveToTop(stack.Pop());
+						{
+							int k = stack.Pop();
+							if (k <= 0) {
+								throw new InvalidOperationException(
+									"MINDEX: argument must be positive number"
+								);
+							}
+							stack.MoveToTop(k);
+						}
 						break;
 					case 0x8A: // ROLL[ ] (ROLL the top three stack elements)
 						stack.Roll();
@@ -857,25 +922,30 @@ namespace SharpGlyph {
 					case 0x58: // IF[ ] (IF test)
 						stream.IF(stack.Pop());
 						break;
-					case 0x1B: // ELSE (ELSE)
+					case 0x1B: // ELSE[ ] (ELSE)
 						stream.ELSE();
 						break;
 					case 0x59: // EIF[ ] (End IF)
 						break;
 					case 0x78: // JROT[ ] (Jump Relative On True)
-						stream.JROT(
-							stack.Pop(),
-							stack.Pop()
-						);
+						{
+							int e = stack.Pop();
+							int offset = stack.Pop();
+							stream.JROT(e, offset);
+						}
 						break;
 					case 0x1C: // JMPR (JuMP)
-						stream.JMPR(stack.Pop());
+						{
+							int offset = stack.Pop();
+							stream.JMPR(offset);
+						}
 						break;
 					case 0x79: // JROF[ ] (Jump Relative On False)
-						stream.JROF(
-							stack.Pop(),
-							stack.Pop()
-						);
+						{
+							int e = stack.Pop();
+							int offset = stack.Pop();
+							stream.JROF(e, offset);
+						}
 						break;
 
 					//-----------------------------------------
@@ -952,31 +1022,13 @@ namespace SharpGlyph {
 					//------------------------------------------------
 					// Compensating for the engine characteristics
 					//
-					case 0x68: // ROUND[ab] (ROUND value)
-						{
-							stack.Round(state);
-						}
+					// ROUND[ab] (ROUND value)
+					case 0x68: case 0x69: case 0x6A: case 0x6B:
+						stack.Round(state, (byte)(opcode & 3));
 						break;
-					case 0x69: // ROUND[ab]
-						stack.Round(state);
-						break;
-					case 0x6A: // ROUND[ab]
-						stack.Round(state);
-						break;
-					case 0x6B: // ROUND[ab]
-						stack.Round(state);
-						break;
-					case 0x6C: // NROUND[ab] (No ROUNDing of value)
-						stack.Round(state);
-						break;
-					case 0x6D: // NROUND[ab]
-						stack.Round(state);
-						break;
-					case 0x6E: // NROUND[ab]
-						stack.Round(state);
-						break;
-					case 0x6F: // NROUND[ab]
-						stack.Round(state);
+					// NROUND[ab] (No ROUNDing of value)
+					case 0x6C: case 0x6D: case 0x6E: case 0x6F:
+						stack.Round(state, (byte)(opcode & 3));
 						break;
 
 					//------------------------------------------------
@@ -1006,9 +1058,10 @@ namespace SharpGlyph {
 					case 0x2A: // LOOPCALL[ ] (LOOP and CALL function)
 						{
 							int f = stack.Pop();
+							int count = stack.Pop();
 							stream.Push(
 								funcs.CALL(f),
-								stack.Pop()
+								count
 							);
 						}
 						break;
@@ -1104,31 +1157,39 @@ namespace SharpGlyph {
 			return (int)(length * 64);
 		}
 
-		protected void SCFS(ref Point2D p, int value, float freedomVector, float projectionVector) {
-			float f = (float)value / 64;
-			p.x += f * Cos(freedomVector) * Cos(projectionVector);
-			p.y += f * Sin(freedomVector) * Sin(projectionVector);
+		protected void SCFS(Point2D p, int value, float freedomVector, float projectionVector) {
+			float fv = value;
+			fv /= 64;
+			Point2D v = new Point2D(fv, fv);
+			float d = v.GetLength(projectionVector);
+			p.x += d * Cos(freedomVector);
+			p.y += d * Sin(freedomVector);
 		}
 
 		protected int MD(Point2D p1, Point2D p2, bool a, GraphicsState state) {
-			if (a) {
-				p1.x = Round(p1.x, state.round_state);
-				p1.y = Round(p1.y, state.round_state);
-				p2.x = Round(p2.x, state.round_state);
-				p2.y = Round(p2.y, state.round_state);
+			float d;
+			if (a == false) {
+				d = p1.GetDistance(p2, state.projection_vector);
+			} else {
+				Point2D pp1 = p1.Clone();
+				Point2D pp2 = p2.Clone();
+				pp1.x = Round(p1.x, state.round_state);
+				pp1.y = Round(p1.y, state.round_state);
+				pp2.x = Round(p2.x, state.round_state);
+				pp2.y = Round(p2.y, state.round_state);
+				d = pp1.GetDistance(pp2, state.projection_vector);
 			}
-			float d = Distance(p1, p2, state);
 			return (int)(d * 64);
 		}
 
 		protected int MPPEM(float projectionVector) {
-			Point2D em = new Point2D(ppem, 0);
+			Point2D em = new Point2D(ppem, ppem);
 			Console.WriteLine("MPPEM: {0}, {1}, {2}", ppem, projectionVector, em.GetLength(projectionVector));
 			return (int)(em.GetLength(projectionVector) * 64);
 		}
 
 		protected int MPS() {
-			return (96 * ppem / 72);
+			return (96 * 64 * ppem / 72);
 		}
 
 		protected void FLIPPT(Glyph glyph, int p) {
@@ -1166,13 +1227,10 @@ namespace SharpGlyph {
 			// TODO: touched
 		}
 
-		protected void SHP(ref Point2D rp, ref Point2D rpo, ref Point2D p, float freedomVector) {
-			float dx = (rp.x - rpo.x);
-			float dy = (rp.y - rpo.y);
-			dx *= Cos(freedomVector);
-			dy *= Sin(freedomVector);
-			p.x += dx;
-			p.y += dy;
+		protected void SHP(Point2D rp, Point2D rpo, Point2D p, float projectionVector, float freedomVector) {
+			float d = rpo.GetDistance(rp, projectionVector);
+			p.x += d * Cos(freedomVector);
+			p.y += d * Sin(freedomVector);
 		}
 
 		protected void SHC(Glyph glyph, Point2D[][] points, Point2D[] origin, GraphicsState state, int c, bool a) {
@@ -1225,14 +1283,14 @@ namespace SharpGlyph {
 			p0.x += dx * Cos(state.freedom_vector);
 			p0.y += dy * Sin(state.freedom_vector);
 
-			state.zp1 = state.zp0;
-			state.zp2 = p;
+			state.rp1 = state.rp0;
+			state.rp2 = p;
 			if (a) {
-				state.zp0 = p;
+				state.rp0 = p;
 			}
 		}
 
-		protected void MDAP(ref Point2D p0, int p, bool a, GraphicsState state) {
+		protected void MDAP(Point2D p0, int p, bool a, GraphicsState state) {
 			if (a) {
 				p0.x = Round(p0.x, state.round_state);
 				p0.y = Round(p0.y, state.round_state);
@@ -1256,7 +1314,7 @@ namespace SharpGlyph {
 			state.rp1 = p;
 		}
 
-		protected void MDRP(ref Point2D rp0, ref Point2D rpo0, ref Point2D p, GraphicsState state, int pi, bool a, bool b, bool c, int de) {
+		protected void MDRP(Point2D rp0, Point2D rpo0, Point2D p, GraphicsState state, int pi, bool a, bool b, bool c, int de) {
 			float dx = rp0.x - rpo0.x;
 			float dy = rp0.y - rpo0.y;
 			float d = Sqrt(dx * dx + dy * dy);
@@ -1285,7 +1343,7 @@ namespace SharpGlyph {
 			}
 		}
 
-		protected void MIRP(ref Point2D rp0, ref Point2D p, GraphicsState state, int pi, int n, bool a, bool b, bool c, int de) {
+		protected void MIRP(Point2D rp0, Point2D p, GraphicsState state, int pi, int n, bool a, bool b, bool c, int de) {
 			float dx = p.x - rp0.x;
 			float dy = p.y - rp0.y;
 			float d = Sqrt(dx * dx + dy * dy);
@@ -1314,13 +1372,10 @@ namespace SharpGlyph {
 			}
 		}
 
-		protected void ALIGNRP(ref Point2D p1, ref Point2D p2, float freedomVector, float projectionVector) {
-			float dx = (p2.x - p1.x) * Cos(projectionVector);
-			float dy = (p2.y - p1.y) * Sin(projectionVector);
-			dx *= Cos(freedomVector);
-			dy *= Sin(freedomVector);
-			p1.x += dx;
-			p1.y += dy;
+		protected void ALIGNRP(Point2D p1, Point2D rp, float freedomVector, float projectionVector) {
+			float d = p1.GetDistance(rp, projectionVector);
+			p1.x += d * Cos(freedomVector);
+			p1.y += d * Sin(freedomVector);
 		}
 
 		protected void ISECT(ref Point2D p, ref Point2D a0, ref Point2D a1, ref Point2D b0, ref Point2D b1) {
@@ -1336,13 +1391,10 @@ namespace SharpGlyph {
 			p.y = a0.y + r * (a1.y - a0.y);
 		}
 
-		protected void ALIGNPTS(ref Point2D p1, ref Point2D p2, float freedomVector, float projectionVector) {
-			float dx = (p2.x - p1.x) * Cos(freedomVector);
-			float dy = (p2.y - p1.y) * Sin(freedomVector);
-			dx *= Cos(projectionVector);
-			dy *= Sin(projectionVector);
-			dx *= 0.5f;
-			dy *= 0.5f;
+		protected void ALIGNPTS(Point2D p1, Point2D p2, float freedomVector, float projectionVector) {
+			float d = p1.GetDistance(p2, projectionVector);
+			float dx = d * Cos(freedomVector) * 0.5f;
+			float dy = d * Sin(freedomVector) * 0.5f;
 			p1.x += dx;
 			p1.y += dy;
 			p2.x -= dx;
@@ -1489,20 +1541,20 @@ namespace SharpGlyph {
 			}
 		}
 
-		protected float Round(float value, int roundState) {
+		protected float Round(float value, RoundState roundState) {
 			return (float)Round((uint)(value * 64), roundState) / 64;
 		}
 
-		protected uint Round(uint f26d6, int roundState) {
-			if (roundState == 5) {
+		protected uint Round(uint f26d6, RoundState roundState) {
+			if (roundState == RoundState.Off) {
 				return f26d6;
 			}
 			switch (roundState) {
-				case 0: // Round To Half Grid
+				case RoundState.HalfGrid:
 					f26d6 &= 0xFFFFFFC0;
 					f26d6 |= 0x20;
 					break;
-				case 1: // Round To Grid
+				case RoundState.Grid:
 					if ((f26d6 & 0x20) > 0) {
 						f26d6 &= 0xFFFFFFC0;
 						f26d6 += 0x40;
@@ -1510,13 +1562,13 @@ namespace SharpGlyph {
 						f26d6 &= 0xFFFFFFC0;
 					}
 					break;
-				case 2: // Round To Double Grid
+				case RoundState.DoubleGrid:
 					f26d6 &= 0xFFFFFFE0;
 					break;
-				case 3: // Round Down To Grid
+				case RoundState.DownToGrid:
 					f26d6 &= 0xFFFFFFC0;
 					break;
-				case 4: // Round Up To Grid
+				case RoundState.UpToGrid:
 					if ((f26d6 & 0x3F) > 0) {
 						f26d6 &= 0xFFFFFFC0;
 						f26d6 += 0x40;

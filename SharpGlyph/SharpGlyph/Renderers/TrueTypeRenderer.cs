@@ -42,7 +42,6 @@ namespace SharpGlyph {
 			xMin += context.DX;
 			yMin += context.DY;
 
-
 			//xMin = (float)Math.Round(xMin);
 
 			/*

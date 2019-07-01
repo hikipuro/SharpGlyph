@@ -68,6 +68,9 @@ namespace SharpGlyph {
 		}
 
 		public byte Next() {
+			if (stream == null) {
+				return 0;
+			}
 			if (pc >= stream.Length) {
 				return 0;
 			}
@@ -90,7 +93,7 @@ namespace SharpGlyph {
 		}
 
 		public void JROT(int condition, int offset) {
-			if (condition == 1) {
+			if (condition != 0) {
 				pc += offset;
 			}
 		}
@@ -154,6 +157,7 @@ namespace SharpGlyph {
 		}
 
 		public void ELSE() {
+			int depth = 0;
 			int skip = 0;
 			while (pc < stream.Length) {
 				int opcode = stream[pc++];
@@ -162,6 +166,9 @@ namespace SharpGlyph {
 					continue;
 				}
 				switch (opcode) {
+					case 0x58: // IF[ ] (IF test)
+						depth++;
+						break;
 					// NPUSHB[ ] (PUSH N Bytes)
 					case 0x40:
 						skip = stream[pc] + 1;
@@ -182,6 +189,13 @@ namespace SharpGlyph {
 						break;
 				}
 				if (skip > 0) {
+					continue;
+				}
+				if (depth > 0) {
+					// EIF
+					if (opcode == 0x59) {
+						depth--;
+					}
 					continue;
 				}
 				// EIF

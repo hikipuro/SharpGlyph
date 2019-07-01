@@ -35,6 +35,7 @@
     <Compile Include="Instructions\InterpreterStackTest.cs" />
     <Compile Include="Instructions\InterpreterTest.cs" />
     <Compile Include="Instructions\InterpreterFuncsTest.cs" />
+    <Compile Include="Instructions\InterpreterStreamTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

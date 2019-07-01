@@ -5,9 +5,9 @@ namespace SharpGlyph {
 		public static readonly float YAxis = (float)(Math.PI / 2);
 		public bool auto_flip;
 		/// <summary>
-		/// F26Dot6
+		/// F26Dot6.
 		/// </summary>
-		public uint control_value_cut_in;
+		public int control_value_cut_in;
 		public int delta_base;
 		public int delta_shift;
 		public float dual_projection_vectors;
@@ -18,19 +18,19 @@ namespace SharpGlyph {
 		public int instruction_control;
 		public int loop;
 		/// <summary>
-		/// F26Dot6
+		/// F26Dot6.
 		/// </summary>
-		public uint minimum_distance;
+		public int minimum_distance;
 		public float projection_vector;
-		public int round_state;
+		public RoundState round_state;
 		public int rp0;
 		public int rp1;
 		public int rp2;
 		public bool scan_control;
 		/// <summary>
-		/// F26Dot6
+		/// F26Dot6.
 		/// </summary>
-		public uint singe_width_cut_in;
+		public int singe_width_cut_in;
 		public int single_width_value;
 
 		public GraphicsState() {
@@ -51,7 +51,7 @@ namespace SharpGlyph {
 			loop = 1;
 			minimum_distance = 1;
 			projection_vector = 0;
-			round_state = 1;
+			round_state = RoundState.Grid;
 			rp0 = 0;
 			rp1 = 0;
 			rp2 = 0;
