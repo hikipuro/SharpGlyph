@@ -292,8 +292,8 @@ namespace UnitTest.Instructions {
 			interpreter.IsDebug = true;
 			InterpreterStack stack = interpreter.stack;
 			stack.Init(32);
-			stack.Push(0);
-			stack.Push(0x1234);
+			stack.Push(0); // location
+			stack.Push(0x1234); // value
 			interpreter.Interpret(new byte[] {
 				0x44 // WCVTP[]
 			});
@@ -307,8 +307,8 @@ namespace UnitTest.Instructions {
 			interpreter.IsDebug = true;
 			InterpreterStack stack = interpreter.stack;
 			stack.Init(32);
-			stack.Push(0);
-			stack.Push(0x1234);
+			stack.Push(0); // location
+			stack.Push(0x1234); // value
 			interpreter.Interpret(new byte[] {
 				0x70 // WCVTF[]
 			});
@@ -389,12 +389,86 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void SPVTL() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			Point2D[] points = new Point2D[2];
+			points[0] = new Point2D(1, 1);
+			points[1] = new Point2D(2, 1);
+			interpreter.debugPoints = points;
+			GraphicsState state = interpreter.state;
+			InterpreterStack stack = interpreter.stack;
+			state.projection_vector = 1;
+			stack.Init(32);
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x06 // SDPVTL[0]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(0, state.projection_vector);
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x07 // SDPVTL[1]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual((float)(Math.PI / 2), state.projection_vector);
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x06 // SDPVTL[0]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual((float)Math.PI, state.projection_vector);
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x07 // SDPVTL[1]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual((float)(Math.PI * 1.5), state.projection_vector);
 		}
 
 		[Test()]
 		public void SFVTL() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			Point2D[] points = new Point2D[2];
+			points[0] = new Point2D(1, 1);
+			points[1] = new Point2D(2, 1);
+			interpreter.debugPoints = points;
+			GraphicsState state = interpreter.state;
+			InterpreterStack stack = interpreter.stack;
+			state.freedom_vector = 1;
+			stack.Init(32);
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x08 // SFVTL[0]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(0, state.freedom_vector);
+			stack.Push(1);
+			stack.Push(0);
+			interpreter.Interpret(new byte[] {
+				0x09 // SFVTL[1]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual((float)(Math.PI / 2), state.freedom_vector);
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x08 // SFVTL[0]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual((float)Math.PI, state.freedom_vector);
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x09 // SFVTL[1]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual((float)(Math.PI * 1.5), state.freedom_vector);
 		}
 
 		[Test()]
@@ -418,12 +492,50 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void SPVFS() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			GraphicsState state = interpreter.state;
+			InterpreterStack stack = interpreter.stack;
+			state.projection_vector = 1;
+			stack.Init(32);
+			stack.Push(1); // x
+			stack.Push(0); // y
+			interpreter.Interpret(new byte[] {
+				0x0A // SPVFS[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(0, state.projection_vector);
+			stack.Push(0); // x
+			stack.Push(1); // y
+			interpreter.Interpret(new byte[] {
+				0x0A // SPVFS[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual((float)(Math.PI / 2), state.projection_vector);
 		}
 
 		[Test()]
 		public void SFVFS() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			GraphicsState state = interpreter.state;
+			InterpreterStack stack = interpreter.stack;
+			state.freedom_vector = 1;
+			stack.Init(32);
+			stack.Push(1); // x
+			stack.Push(0); // y
+			interpreter.Interpret(new byte[] {
+				0x0B // SFVFS[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(0, state.freedom_vector);
+			stack.Push(0); // x
+			stack.Push(1); // y
+			interpreter.Interpret(new byte[] {
+				0x0B // SFVFS[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual((float)(Math.PI / 2), state.freedom_vector);
 		}
 
 		[Test()]
@@ -738,7 +850,17 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void SMD() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.state.minimum_distance = 0;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x1234); // distance
+			interpreter.Interpret(new byte[] {
+				0x1A // SMD[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(0x1234, interpreter.state.minimum_distance);
 		}
 
 		[Test()]
@@ -758,7 +880,17 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void SCVTCI() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			Assert.AreEqual(0x44, interpreter.state.control_value_cut_in);
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x1234); // n
+			interpreter.Interpret(new byte[] {
+				0x1D // SCVTCI[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(0x1234, interpreter.state.control_value_cut_in);
 		}
 
 		[Test()]
@@ -815,17 +947,45 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void SANGW() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x7E // SANGW[]
+			});
+			Assert.AreEqual(0, stack.Depth);
 		}
 
 		[Test()]
 		public void SDB() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			Assert.AreEqual(9, interpreter.state.delta_base);
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x1234); // n
+			interpreter.Interpret(new byte[] {
+				0x5E // SDB[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(0x1234, interpreter.state.delta_base);
 		}
 
 		[Test()]
 		public void SDS() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			Assert.AreEqual(3, interpreter.state.delta_shift);
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x1234); // n
+			interpreter.Interpret(new byte[] {
+				0x5F // SDS[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(0x1234, interpreter.state.delta_shift);
 		}
 
 		[Test()]
@@ -855,17 +1015,81 @@ namespace UnitTest.Instructions {
 
 		[Test()]
 		public void FLIPPT() {
-			Assert.Fail();
+			SimpleGlyph simpleGlyph = new SimpleGlyph();
+			simpleGlyph.endPtsOfContours = new ushort[] { 2 };
+			simpleGlyph.flags = new SimpleGlyphFlags[] {
+				0,
+				SimpleGlyphFlags.ON_CURVE_POINT
+			};
+			Glyph glyph = new Glyph();
+			glyph.numberOfContours = 1;
+			glyph.simpleGlyph = simpleGlyph;
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			interpreter.state.loop = 2;
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x80 // FLIPPT[]
+			}, glyph);
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(1, interpreter.state.loop);
+			Assert.AreEqual(SimpleGlyphFlags.ON_CURVE_POINT, simpleGlyph.flags[0]);
+			Assert.AreEqual((SimpleGlyphFlags)0, simpleGlyph.flags[1]);
 		}
 
 		[Test()]
 		public void FLIPRGON() {
-			Assert.Fail();
+			SimpleGlyph simpleGlyph = new SimpleGlyph();
+			simpleGlyph.endPtsOfContours = new ushort[] { 2 };
+			simpleGlyph.flags = new SimpleGlyphFlags[] {
+				0, 0, 0
+			};
+			Glyph glyph = new Glyph();
+			glyph.numberOfContours = 1;
+			glyph.simpleGlyph = simpleGlyph;
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x81 // FLIPRGON[]
+			}, glyph);
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual(SimpleGlyphFlags.ON_CURVE_POINT, simpleGlyph.flags[0]);
+			Assert.AreEqual(SimpleGlyphFlags.ON_CURVE_POINT, simpleGlyph.flags[1]);
+			Assert.AreEqual((SimpleGlyphFlags)0, simpleGlyph.flags[2]);
 		}
 
 		[Test()]
 		public void FLIPRGOFF() {
-			Assert.Fail();
+			SimpleGlyph simpleGlyph = new SimpleGlyph();
+			simpleGlyph.endPtsOfContours = new ushort[] { 2 };
+			simpleGlyph.flags = new SimpleGlyphFlags[] {
+				SimpleGlyphFlags.ON_CURVE_POINT,
+				SimpleGlyphFlags.ON_CURVE_POINT,
+				SimpleGlyphFlags.ON_CURVE_POINT
+			};
+			Glyph glyph = new Glyph();
+			glyph.numberOfContours = 1;
+			glyph.simpleGlyph = simpleGlyph;
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x82 // FLIPRGOFF[]
+			}, glyph);
+			Assert.AreEqual(0, stack.Depth);
+			Assert.AreEqual((SimpleGlyphFlags)0, simpleGlyph.flags[0]);
+			Assert.AreEqual((SimpleGlyphFlags)0, simpleGlyph.flags[1]);
+			Assert.AreEqual(SimpleGlyphFlags.ON_CURVE_POINT, simpleGlyph.flags[2]);
 		}
 
 		[Test()]
@@ -1853,6 +2077,7 @@ namespace UnitTest.Instructions {
 		public void FDEF() {
 			Interpreter interpreter = new Interpreter(null);
 			interpreter.IsDebug = true;
+			interpreter.maxFunctionDefs = 10;
 			InterpreterStack stack = interpreter.stack;
 			stack.Init(32);
 			stack.Push(1);
@@ -1862,6 +2087,9 @@ namespace UnitTest.Instructions {
 				0x2D  // ENDF[]
 			});
 			Assert.AreEqual(0, stack.Depth);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(3);
 			stack.Push(2);
 			interpreter.Interpret(new byte[] {
 				0x2C, // FDEF[]
@@ -1869,31 +2097,95 @@ namespace UnitTest.Instructions {
 				0x58, // IF[]
 				0x60, // ADD[]
 				0x59, // EIF[]
-				0x2D  // ENDF[]
+				0x2D, // ENDF[]
+				0x2C, // FDEF[]
+				0x2D, // ENDF[]
+				0x60  // ADD[]
 			});
-			Assert.AreEqual(0, stack.Depth);
-			Assert.AreEqual(2, interpreter.funcs.GetFuncCount());
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
+			Assert.AreEqual(3, interpreter.funcs.GetFuncCount());
 			byte[] bytes = interpreter.funcs.CALL(1);
 			Assert.AreEqual(1, bytes.Length);
 			bytes = interpreter.funcs.CALL(2);
 			Assert.AreEqual(4, bytes.Length);
+			bytes = interpreter.funcs.CALL(3);
+			Assert.AreEqual(0, bytes.Length);
 			bytes = interpreter.funcs.CALL(0);
 			Assert.IsNull(bytes);
 		}
 
 		[Test()]
 		public void CALL() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.maxFunctionDefs = 10;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x2C, // FDEF[]
+				0x60, // ADD[]
+				0x2D  // ENDF[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x2B  // CALL[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
 		}
 
 		[Test()]
 		public void LOOPCALL() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			interpreter.maxFunctionDefs = 10;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(1);
+			interpreter.Interpret(new byte[] {
+				0x2C, // FDEF[]
+				0x60, // ADD[]
+				0x2D  // ENDF[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			stack.Push(0x30);
+			stack.Push(0x40);
+			stack.Push(3); // loop count
+			stack.Push(1); // function number
+			interpreter.Interpret(new byte[] {
+				0x2A  // LOOPCALL[]
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0xA0, stack.Pop());
 		}
 
 		[Test()]
 		public void IDEF() {
-			Assert.Fail();
+			Interpreter interpreter = new Interpreter(null);
+			interpreter.IsDebug = true;
+			InterpreterStack stack = interpreter.stack;
+			stack.Init(32);
+			stack.Push(0x28);
+			interpreter.Interpret(new byte[] {
+				0x89, // IDEF[]
+				0x60, // ADD[]
+				0x2D  // ENDF[]
+			});
+			Assert.AreEqual(0, stack.Depth);
+			stack.Push(0x10);
+			stack.Push(0x20);
+			interpreter.Interpret(new byte[] {
+				0x28  // undefined opcode
+			});
+			Assert.AreEqual(1, stack.Depth);
+			Assert.AreEqual(0x30, stack.Pop());
 		}
 
 		[Test()]

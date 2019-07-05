@@ -4,11 +4,11 @@ using System.Collections.Generic;
 namespace SharpGlyph {
 	public class InterpreterFuncs {
 		protected Dictionary<int, byte[]> funcs;
-		protected Dictionary<int, byte[]> insts;
+		protected Dictionary<byte, byte[]> insts;
 
 		public InterpreterFuncs() {
 			funcs = new Dictionary<int, byte[]>();
-			insts = new Dictionary<int, byte[]>();
+			insts = new Dictionary<byte, byte[]>();
 		}
 
 		public int GetFuncCount() {
@@ -41,7 +41,7 @@ namespace SharpGlyph {
 			return null;
 		}
 
-		public void IDEF(int index, byte[] data) {
+		public void IDEF(byte index, byte[] data) {
 			if (insts.ContainsKey(index)) {
 				insts[index] = data;
 				return;
@@ -49,7 +49,7 @@ namespace SharpGlyph {
 			insts.Add(index, data);
 		}
 
-		public byte[] ICALL(int index) {
+		public byte[] ICALL(byte index) {
 			if (insts.ContainsKey(index)) {
 				return insts[index];
 			}

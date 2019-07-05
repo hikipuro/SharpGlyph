@@ -17,9 +17,9 @@ namespace SharpGlyph {
 		protected InterpreterStream stream;
 		protected GetInfoResult getInfoResult;
 		//protected MaxpTable maxp;
-		protected ushort maxStackElements;
-		protected ushort maxTwilightPoints;
-		protected ushort maxFunctionDefs;
+		public ushort maxStackElements;
+		public ushort maxTwilightPoints;
+		public ushort maxFunctionDefs;
 
 		public static string Decode(byte[] data) {
 			return InstructionsDecoder.Decode(data);
@@ -51,7 +51,7 @@ namespace SharpGlyph {
 			#endif
 		}
 
-		public Glyph Interpret(byte[] data, Glyph glyph = null) {
+		public Glyph Interpret(byte[] data, Glyph glyph = null, bool isCVT = false) {
 			if (data == null || data.Length <= 0) {
 				return glyph;
 			}
@@ -131,7 +131,7 @@ namespace SharpGlyph {
 					//continue;
 				}
 
-				ushort opcode = stream.Next();
+				byte opcode = stream.Next();
 				//if (glyph != null) {
 				//	Console.WriteLine("{0:X}", opcode);
 				//}
@@ -195,9 +195,9 @@ namespace SharpGlyph {
 						break;
 					case 0x70: // WCVTF[ ] (Write Control Value Table in FUnits)
 						{
-							int v = stack.Pop();
+							int n = stack.Pop();
 							int l = stack.Pop();
-							cvt.data[l] = v / 64;
+							cvt.data[l] = n / 64;
 						}
 						break;
 					case 0x45: // RCVT[ ] (Read Control Value Table)
@@ -368,6 +368,9 @@ namespace SharpGlyph {
 						{
 							int s = stack.Pop();
 							int value = stack.Pop();
+							if (isCVT) {
+
+							}
 						}
 						break;
 					case 0x85: // SCANCTRL[ ] (SCAN conversion ConTRoL)
@@ -1068,7 +1071,7 @@ namespace SharpGlyph {
 					case 0x89: // IDEF[ ] (Instruction DEFinition)
 						{
 							int code = stack.Pop();
-							funcs.IDEF(code, stream.GetFunc());
+							funcs.IDEF((byte)code, stream.GetFunc());
 						}
 						break;
 
@@ -1121,15 +1124,14 @@ namespace SharpGlyph {
 			if (IsDebug == false) {
 				stream.Clear();
 				state.Reset();
-			}
-
-			if (glyph != null) {
-				SimpleGlyph simpleGlyph = glyph.simpleGlyph;
-				if (simpleGlyph != null) {
-					for (int i = 0; i < points.Length; i++) {
-						Point2D point = points[1][i];
-						simpleGlyph.xCoordinates[i] = (short)point.x;
-						simpleGlyph.yCoordinates[i] = (short)point.y;
+				if (glyph != null) {
+					SimpleGlyph simpleGlyph = glyph.simpleGlyph;
+					if (simpleGlyph != null) {
+						for (int i = 0; i < points.Length; i++) {
+							Point2D point = points[1][i];
+							simpleGlyph.xCoordinates[i] = (short)point.x;
+							simpleGlyph.yCoordinates[i] = (short)point.y;
+						}
 					}
 				}
 			}

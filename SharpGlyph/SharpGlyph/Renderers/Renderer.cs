@@ -84,7 +84,7 @@ namespace SharpGlyph {
 			#if DEBUG
 			Console.WriteLine("Prep Decode: {0}\n{1}", data.Length, Interpreter.Decode(data));
 			#endif
-			interpreter.Interpret(data, null);
+			interpreter.Interpret(data, null, true);
 		}
 
 		protected Glyph InterpretGlyph(Glyph glyph) {
